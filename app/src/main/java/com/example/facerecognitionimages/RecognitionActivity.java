@@ -14,6 +14,7 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -32,6 +33,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 
+import com.example.facerecognitionimages.ml.Facenet;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -44,12 +46,18 @@ import com.google.mlkit.vision.face.FaceDetectorOptions;
 import org.tensorflow.lite.Interpreter;
 
 import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.List;
 
-
+import org.tensorflow.lite.Interpreter;
 
 public class RecognitionActivity extends AppCompatActivity {
+
 
         CardView galleryCard,cameraCard;
         ImageView imageView;
@@ -63,12 +71,14 @@ public class RecognitionActivity extends AppCompatActivity {
                         .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
                         .enableTracking()
                         .build();
-    FaceDetector detector;
+        FaceDetector detector;
 
-        //TODO declare face recognizer
+    public RecognitionActivity() throws IOException {
+    }
 
-
-        //TODO get the image from gallery and display it
+    //TODO declare face recognizer
+    Facenet model;
+    //TODO get the image from gallery and display it
         ActivityResultLauncher<Intent> galleryActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
@@ -153,7 +163,11 @@ public class RecognitionActivity extends AppCompatActivity {
 
 
             //TODO initialize face recognition model
-
+            try {
+                model = Facenet.newInstance(this);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         //TODO opens camera so that user can capture image
@@ -218,7 +232,11 @@ public class RecognitionActivity extends AppCompatActivity {
                                             p1.setColor(Color.RED);
                                             p1.setStyle(Paint.Style.STROKE);
                                             p1.setStrokeWidth(5);
-                                            PerformFaceRecognition(bounds,mutableBMP);
+                                            try {
+                                                PerformFaceRecognition(bounds,mutableBMP);
+                                            } catch (IOException e) {
+                                                throw new RuntimeException(e);
+                                            }
                                             canvas.drawRect(bounds, p1);
                                         }
                                         //imageView.setImageBitmap(mutableBMP);
@@ -234,7 +252,7 @@ public class RecognitionActivity extends AppCompatActivity {
                                 });
     }
     //TODO perform face recognition
-    public void PerformFaceRecognition(Rect bound, Bitmap input){
+    public void PerformFaceRecognition(Rect bound, Bitmap input) throws IOException {
         if(bound.top<0){
             bound.top=0;
         }
@@ -247,13 +265,46 @@ public class RecognitionActivity extends AppCompatActivity {
         if(bound.right>input.getWidth()){
             bound.right=input.getWidth()-1;}
         Bitmap cropped=Bitmap.createBitmap(input,bound.left,bound.top,bound.width(),bound.height());
-        imageView.setImageBitmap(cropped);
+        //imageView.setImageBitmap(cropped);
+        ByteBuffer byteBuffer = bitmapToByteBuffer(cropped,cropped.getWidth(),cropped.getHeight());
 
+        Interpreter tflite = new Interpreter(loadModelFile(this, "app/src/main/assets/facenet_512.tflite"));
+        imageView.setImageBitmap(cropped);
+        //float[][] output = new float[1][512]; // embeddingSize is the size of the face embeddings (e.g., 128)
+        //tflite.run(byteBuffer, output);
+        //float[] faceEmbeddings =output[0];
+        //Log.d("traces","Len="+output.length);
+        //Log.d("traces","Len="+faceEmbeddings.length);
 
     }
 
+    public static ByteBuffer bitmapToByteBuffer(Bitmap bitmap, int width, int height) {
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4* width * height * 3);
+        byteBuffer.order(ByteOrder.nativeOrder());
+        int[] intValues = new int[width * height];
+        bitmap.getPixels(intValues, 0, width, 0, 0, width, height);
+        int pixel= 0;
+        for (int i = 0; i < width; ++i) {
+            for (int j = 0; j < height; ++j) {
+                int val = intValues[pixel++];
+                byteBuffer.putFloat(((val >> 16) & 0xFF) / 255.0f);
+                byteBuffer.putFloat(((val >> 8) & 0xFF) / 255.0f);
+                byteBuffer.putFloat((val & 0xFF) / 255.0f);}
+        }
+        return byteBuffer;
+    }
 
-        @Override
+    private MappedByteBuffer loadModelFile(Activity activity, String modelPath) throws IOException {
+        AssetFileDescriptor fileDescriptor = activity.getAssets().openFd(modelPath);
+        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+        FileChannel fileChannel = inputStream.getChannel();
+        long startOffset = fileDescriptor.getStartOffset();
+        long declaredLength = fileDescriptor.getDeclaredLength();
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+    }
+
+
+    @Override
         protected void onDestroy() {
             super.onDestroy();
 
