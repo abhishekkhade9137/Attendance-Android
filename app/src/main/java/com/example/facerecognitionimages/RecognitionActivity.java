@@ -4,6 +4,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
@@ -16,7 +17,11 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,13 +32,25 @@ import android.view.View;
 import android.widget.ImageView;
 
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import org.tensorflow.lite.Interpreter;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.util.List;
+
 
 
 public class RecognitionActivity extends AppCompatActivity {
+
         CardView galleryCard,cameraCard;
         ImageView imageView;
         Uri image_uri;
@@ -41,7 +58,12 @@ public class RecognitionActivity extends AppCompatActivity {
 
 
         //TODO declare face detector
-
+        FaceDetectorOptions highAccuracyOpts =
+                new FaceDetectorOptions.Builder()
+                        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                        .enableTracking()
+                        .build();
+    FaceDetector detector;
 
         //TODO declare face recognizer
 
@@ -56,7 +78,8 @@ public class RecognitionActivity extends AppCompatActivity {
                             image_uri = result.getData().getData();
                             Bitmap inputImage = uriToBitmap(image_uri);
                             Bitmap rotated = rotateBitmap(inputImage);
-                            imageView.setImageBitmap(rotated);
+                            //imageView.setImageBitmap(rotated);
+                            PerformFaceDetection(rotated);
                         }
                     }
                 });
@@ -70,7 +93,8 @@ public class RecognitionActivity extends AppCompatActivity {
                         if (result.getResultCode() == Activity.RESULT_OK) {
                             Bitmap inputImage = uriToBitmap(image_uri);
                             Bitmap rotated = rotateBitmap(inputImage);
-                            imageView.setImageBitmap(rotated);
+                            //imageView.setImageBitmap(rotated);
+                            PerformFaceDetection(rotated);
                         }
                     }
                 });
@@ -125,6 +149,7 @@ public class RecognitionActivity extends AppCompatActivity {
             });
 
             //TODO initialize face detector
+            detector = FaceDetection.getClient(highAccuracyOpts);
 
 
             //TODO initialize face recognition model
@@ -175,10 +200,57 @@ public class RecognitionActivity extends AppCompatActivity {
             return cropped;
         }
 
-        //TODO perform face detection
+    public void PerformFaceDetection(Bitmap input) {
+        Bitmap mutableBMP= input.copy(Bitmap.Config.ARGB_8888,true);
+        Canvas canvas = new Canvas(mutableBMP);
+        InputImage image = InputImage.fromBitmap(input, 0);
+        Task<List<Face>> result =
+                detector.process(image)
+                        .addOnSuccessListener(
+                                new OnSuccessListener<List<Face>>() {
+                                    @Override
+                                    public void onSuccess(List<Face> faces) {
+                                        Log.d("traces","Len="+faces.size());
+                                        for (Face face : faces) {
+                                            Rect bounds = face.getBoundingBox();
+                                            int trackingid=face.getTrackingId();
+                                            Paint p1 = new Paint();
+                                            p1.setColor(Color.RED);
+                                            p1.setStyle(Paint.Style.STROKE);
+                                            p1.setStrokeWidth(5);
+                                            PerformFaceRecognition(bounds,mutableBMP);
+                                            canvas.drawRect(bounds, p1);
+                                        }
+                                        //imageView.setImageBitmap(mutableBMP);
+                                    }
+                                })
+                        .addOnFailureListener(
+                                new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        // Task failed with an exception
+                                        // ...
+                                    }
+                                });
+    }
+    //TODO perform face recognition
+    public void PerformFaceRecognition(Rect bound, Bitmap input){
+        if(bound.top<0){
+            bound.top=0;
+        }
+        if(bound.left<0){
+            bound.left=0;
+        }
+        if(bound.bottom>input.getHeight()){
+            bound.bottom=input.getHeight()-1;
+        }
+        if(bound.right>input.getWidth()){
+            bound.right=input.getWidth()-1;}
+        Bitmap cropped=Bitmap.createBitmap(input,bound.left,bound.top,bound.width(),bound.height());
+        imageView.setImageBitmap(cropped);
 
 
-        //TODO perform face recognition
+    }
 
 
         @Override
