@@ -5,20 +5,25 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,12 +31,42 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
-import java.io.FileDescriptor;
-import java.io.IOException;
+import android.widget.Toast;
 
+
+import com.example.facerecognitionimages.ml.Facenet;
+import com.example.facerecognitionimages.ml.Facenet512;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
+
+import org.tensorflow.lite.DataType;
+import org.tensorflow.lite.Interpreter;
+
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
+import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 public class RegisterActivity extends AppCompatActivity {
+
+    public static HashMap<String, float[]> faceEmbeddingsMap = new HashMap<>();
     CardView galleryCard,cameraCard;
     ImageView imageView;
     Uri image_uri;
@@ -39,9 +74,16 @@ public class RegisterActivity extends AppCompatActivity {
 
 
     //TODO declare face detector
+    FaceDetectorOptions highAccuracyOpts =
+            new FaceDetectorOptions.Builder()
+                    .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                    .enableTracking()
+                    .build();
+    FaceDetector detector;
 
+    public RegisterActivity() throws IOException {
+    }
 
-    //TODO declare face recognizer
 
 
     //TODO get the image from gallery and display it
@@ -54,7 +96,8 @@ public class RegisterActivity extends AppCompatActivity {
                         image_uri = result.getData().getData();
                         Bitmap inputImage = uriToBitmap(image_uri);
                         Bitmap rotated = rotateBitmap(inputImage);
-                        imageView.setImageBitmap(rotated);
+                        //imageView.setImageBitmap(rotated);
+                        PerformFaceDetection(rotated);
                     }
                 }
             });
@@ -68,7 +111,8 @@ public class RegisterActivity extends AppCompatActivity {
                     if (result.getResultCode() == Activity.RESULT_OK) {
                         Bitmap inputImage = uriToBitmap(image_uri);
                         Bitmap rotated = rotateBitmap(inputImage);
-                        imageView.setImageBitmap(rotated);
+                        //imageView.setImageBitmap(rotated);
+                        PerformFaceDetection(rotated);
                     }
                 }
             });
@@ -123,6 +167,7 @@ public class RegisterActivity extends AppCompatActivity {
         });
 
         //TODO initialize face detector
+        detector = FaceDetection.getClient(highAccuracyOpts);
 
 
         //TODO initialize face recognition model
@@ -173,10 +218,124 @@ public class RegisterActivity extends AppCompatActivity {
         return cropped;
     }
 
-    //TODO perform face detection
-
-
+    public void PerformFaceDetection(Bitmap input) {
+        Bitmap mutableBMP= input.copy(Bitmap.Config.ARGB_8888,true);
+        Canvas canvas = new Canvas(mutableBMP);
+        InputImage image = InputImage.fromBitmap(input, 0);
+        Task<List<Face>> result =
+                detector.process(image)
+                        .addOnSuccessListener(
+                                new OnSuccessListener<List<Face>>() {
+                                    @Override
+                                    public void onSuccess(List<Face> faces) {
+                                        Log.d("traces","Len="+faces.size());
+                                        for (Face face : faces) {
+                                            Rect bounds = face.getBoundingBox();
+                                            //int trackingid=face.getTrackingId();
+                                            Paint p1 = new Paint();
+                                            p1.setColor(Color.RED);
+                                            p1.setStyle(Paint.Style.STROKE);
+                                            p1.setStrokeWidth(5);
+                                            PerformFaceRecognition(bounds,mutableBMP);
+                                            canvas.drawRect(bounds, p1);
+                                        }
+                                        //imageView.setImageBitmap(mutableBMP);
+                                        Log.d("traces","flag 1 size of faces"+faces.size());
+                                    }
+                                })
+                        .addOnFailureListener(
+                                new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        // Task failed with an exception
+                                        // ...
+                                    }
+                                });
+    }
     //TODO perform face recognition
+    public void PerformFaceRecognition(Rect bound, Bitmap input){
+        Log.d("traces","flag 2"+bound.toString());
+        if(bound.top<0){
+            bound.top=0;
+        }
+        if(bound.left<0){
+            bound.left=0;
+        }
+        if(bound.bottom>input.getHeight()){
+            bound.bottom=input.getHeight()-1;
+        }
+        if(bound.right>input.getWidth()){
+            bound.right=input.getWidth()-1;}
+        Log.d("traces","flag 3"+bound.toString());
+        Bitmap cropped = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(cropped, 160, 160, true);
+        Log.d("traces","flag 4"+resizedBitmap.getHeight()+","+resizedBitmap.getWidth());
+        ByteBuffer byteBuffer = bitmapToByteBuffer(resizedBitmap, resizedBitmap.getWidth(), resizedBitmap. getHeight());
+        Log.d("traces","flag 5"+byteBuffer.toString());
+        imageView.setImageBitmap(resizedBitmap);
+        try {
+            Log.d("traces","flag 6");
+            Facenet512 model = Facenet512.newInstance(this);
+            Log.d("traces","flag 7");
+            //Creates inputs for reference.
+            TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 160, 160, 3}, DataType.FLOAT32);
+            Log.d("traces","flag 8");
+            inputFeature0.loadBuffer(byteBuffer);
+            Log.d("traces","flag 9");
+            // Runs model inference and gets result.
+            Facenet512.Outputs outputs = model.process(inputFeature0);
+            TensorBuffer outputFeature0 = outputs.getOutputFeature0AsTensorBuffer();
+            Log.d("traces","flag 10"+ Arrays.toString(outputFeature0.getShape()));
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Enter your name");
+
+            final EditText inputname = new EditText(this);
+            builder.setView(inputname);
+
+            builder.setPositiveButton("OK", (dialog, which) -> {
+                String userInput = inputname.getText().toString();
+                // Do something with the userInput (e.g., display it in a Toast)
+
+                Toast.makeText(this, "You entered: " + userInput, Toast.LENGTH_SHORT).show();
+                String name = "John Doe";
+                float[] embedding = outputFeature0.getFloatArray();
+                Log.d("traces","flag 11"+faceEmbeddingsMap.toString());
+                // Your embedding generation logic
+                faceEmbeddingsMap.put(userInput, embedding);
+                // Releases model resources if no longer used.
+                Log.d("traces","flag 12"+faceEmbeddingsMap.toString());
+
+            });
+            builder.setNegativeButton("Cancel", (dialog, which) -> {
+                dialog.cancel();
+            });
+
+            builder.show();
+
+            model.close();
+        } catch (IOException e) {
+            // TODO Handle the exception
+        }
+
+
+    }
+
+    public static ByteBuffer bitmapToByteBuffer(Bitmap bitmap, int width, int height) {
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4* width * height * 3);
+        byteBuffer.order(ByteOrder.nativeOrder());
+        int[] intValues = new int[width * height];
+        bitmap.getPixels(intValues, 0, width, 0, 0, width, height);
+        int pixel= 0;
+        for (int i = 0; i < width; ++i) {
+            for (int j = 0; j < height; ++j) {
+                int val = intValues[pixel++];
+                byteBuffer.putFloat(((val >> 16) & 0xFF) / 255.0f);
+                byteBuffer.putFloat(((val >> 8) & 0xFF) / 255.0f);
+                byteBuffer.putFloat((val & 0xFF) / 255.0f);}
+        }
+        return byteBuffer;
+    }
 
 
     @Override
