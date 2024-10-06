@@ -13,7 +13,9 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
@@ -52,6 +54,7 @@ import org.tensorflow.lite.Interpreter;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -63,7 +66,7 @@ import java.util.List;
 
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
-
+import com.google.gson.Gson;
 public class RegisterActivity extends AppCompatActivity {
 
     public static HashMap<String, float[]> faceEmbeddingsMap = new HashMap<>();
@@ -313,6 +316,11 @@ public class RegisterActivity extends AppCompatActivity {
 
             builder.show();
 
+            Gson gson = new Gson();
+            String hashMapString = gson.toJson(faceEmbeddingsMap);
+            FileOutputStream outputStream = openFileOutput("face_embeddings.json", Context.MODE_PRIVATE);
+            outputStream.write(hashMapString.getBytes());
+            outputStream.close();
             model.close();
         } catch (IOException e) {
             // TODO Handle the exception
