@@ -2,4 +2,26 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <color name="colorPrimary">#000000</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#333333</color>
+    <color name="colorPrimaryLight">#E0E0E0</color>
+    
+    <color name="windowBackground">#FFFFFF</color>
+    <color name="surfaceColor">#FFFFFF</color>
+    <color name="surfaceVariant">#F5F5F5</color>
+    
+    <color name="textColorPrimary">#000000</color>
+    <color name="textColorSecondary">#666666</color>
+    <color name="textColorTertiary">#999999</color>
+    
+    <color name="successColor">#000000</color>
+    <color name="errorColor">#333333</color>
+    <color name="warningColor">#666666</color>
+    
+    <color name="overlayDark">#80000000</color>
+    <color name="overlayLight">#CCFFFFFF</color>
+    
+    <color name="borderColor">#CCCCCC</color>
 </resources>

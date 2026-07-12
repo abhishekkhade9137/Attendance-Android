@@ -1,37 +1,48 @@
 package com.example.facerecognitionimages;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
+import android.view.MenuItem;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
 
+    private BottomNavigationView bottomNavigationView;
 
-    Button registerBtn,recognizeBtn;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        registerBtn = findViewById(R.id.buttonregister);
-        recognizeBtn = findViewById(R.id.buttonrecognize);
+        bottomNavigationView = findViewById(R.id.bottomNavigation);
 
-        registerBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this,RegisterActivity.class));
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            Fragment selectedFragment = null;
+            int itemId = item.getItemId();
+            if (itemId == R.id.nav_dashboard) {
+                selectedFragment = new DashboardFragment();
+            } else if (itemId == R.id.nav_members) {
+                selectedFragment = new MembersFragment();
+            } else if (itemId == R.id.nav_logs) {
+                selectedFragment = new LogsFragment();
             }
+
+            if (selectedFragment != null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, selectedFragment)
+                        .commit();
+                return true;
+            }
+            return false;
         });
 
-        recognizeBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this,RecognitionActivity.class));
-            }
-        });
+        // Load default fragment
+        if (savedInstanceState == null) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
+        }
     }
 }

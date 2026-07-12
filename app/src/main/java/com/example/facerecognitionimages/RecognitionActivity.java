@@ -1,315 +1,378 @@
 package com.example.facerecognitionimages;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.media.Image;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.CameraInfo;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ExperimentalGetImage;
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageProxy;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
-import com.example.facerecognitionimages.ml.Facenet;
 import com.example.facerecognitionimages.ml.Facenet512;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
-import org.tensorflow.lite.DataType;
-import org.tensorflow.lite.Interpreter;
+import com.example.facerecognitionimages.db.AppDatabase;
+import com.example.facerecognitionimages.db.LogEntity;
+import com.example.facerecognitionimages.db.MemberEntity;
 
-import java.io.FileDescriptor;
+import org.tensorflow.lite.DataType;
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
+
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.Arrays;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-
-import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class RecognitionActivity extends AppCompatActivity {
 
+    private PreviewView previewView;
+    private ImageView overlayView;
+    private TextView statusText;
+    private ExecutorService cameraExecutor;
+    private CameraSelector currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+    private ProcessCameraProvider cameraProvider;
 
-        CardView galleryCard,cameraCard;
-        ImageView imageView;
-        Uri image_uri;
-        public static final int PERMISSION_CODE = 100;
+    private FaceDetector detector;
+    private Facenet512 model;
+    public static HashMap<String, float[]> faceEmbeddingsMap = new HashMap<>();
+    private Map<String, Long> lastMarkedTime = new HashMap<>();
+    private Map<String, Boolean> hasBlinked = new HashMap<>();
+    private boolean isProcessing = false;
+    private android.widget.RadioGroup attendanceTypeGroup;
 
+    private static final int PERMISSION_CODE = 100;
 
-        //TODO declare face detector
-        FaceDetectorOptions highAccuracyOpts =
-                new FaceDetectorOptions.Builder()
-                        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                        .enableTracking()
-                        .build();
-        FaceDetector detector;
-
-    public RecognitionActivity() throws IOException {
-    }
-
-    //TODO declare face recognizer
-
-    //TODO get the image from gallery and display it
-        ActivityResultLauncher<Intent> galleryActivityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            image_uri = result.getData().getData();
-                            Bitmap inputImage = uriToBitmap(image_uri);
-                            Bitmap rotated = rotateBitmap(inputImage);
-                            //imageView.setImageBitmap(rotated);
-                            PerformFaceDetection(rotated);
-                        }
-                    }
-                });
-
-        //TODO capture the image using camera and display it
-        ActivityResultLauncher<Intent> cameraActivityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            Bitmap inputImage = uriToBitmap(image_uri);
-                            Bitmap rotated = rotateBitmap(inputImage);
-                            //imageView.setImageBitmap(rotated);
-                            PerformFaceDetection(rotated);
-                        }
-                    }
-                });
-
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.activity_register);
-
-            //TODO handling permissions
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED || checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        == PackageManager.PERMISSION_DENIED){
-                    String[] permission = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                    requestPermissions(permission, PERMISSION_CODE);
-                }
-            }
-
-            //TODO initialize views
-            galleryCard = findViewById(R.id.gallerycard);
-            cameraCard = findViewById(R.id.cameracard);
-            imageView = findViewById(R.id.imageView2);
-
-            //TODO code for choosing images from gallery
-            galleryCard.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    galleryActivityResultLauncher.launch(galleryIntent);
+    ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Uri imageUri = result.getData().getData();
+                    processGalleryImage(imageUri);
                 }
             });
-
-            //TODO code for capturing images using camera
-            cameraCard.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-                        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED || checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                == PackageManager.PERMISSION_DENIED){
-                            String[] permission = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                            requestPermissions(permission, PERMISSION_CODE);
-                        }
-                        else {
-                            openCamera();
-                        }
-                    }
-
-                    else {
-                        openCamera();
-                    }
-                }
-            });
-
-            //TODO initialize face detector
-            detector = FaceDetection.getClient(highAccuracyOpts);
-
-
-            //TODO initialize face recognition model
-
-        }
-
-        //TODO opens camera so that user can capture image
-        private void openCamera() {
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.Images.Media.TITLE, "New Picture");
-            values.put(MediaStore.Images.Media.DESCRIPTION, "From the Camera");
-            image_uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-            Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, image_uri);
-            cameraActivityResultLauncher.launch(cameraIntent);
-        }
-
-        //TODO takes URI of the image and returns bitmap
-        private Bitmap uriToBitmap(Uri selectedFileUri) {
-            try {
-                ParcelFileDescriptor parcelFileDescriptor =
-                        getContentResolver().openFileDescriptor(selectedFileUri, "r");
-                FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-                Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
-
-                parcelFileDescriptor.close();
-                return image;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return  null;
-        }
-
-        //TODO rotate image if image captured on samsung devices
-        //TODO Most phone cameras are landscape, meaning if you take the photo in portrait, the resulting photos will be rotated 90 degrees.
-        @SuppressLint("Range")
-        public Bitmap rotateBitmap(Bitmap input){
-            String[] orientationColumn = {MediaStore.Images.Media.ORIENTATION};
-            Cursor cur = getContentResolver().query(image_uri, orientationColumn, null, null, null);
-            int orientation = -1;
-            if (cur != null && cur.moveToFirst()) {
-                orientation = cur.getInt(cur.getColumnIndex(orientationColumn[0]));
-            }
-            Log.d("tryOrientation",orientation+"");
-            Matrix rotationMatrix = new Matrix();
-            rotationMatrix.setRotate(orientation);
-            Bitmap cropped = Bitmap.createBitmap(input,0,0, input.getWidth(), input.getHeight(), rotationMatrix, true);
-            return cropped;
-        }
-
-    public void PerformFaceDetection(Bitmap input) {
-        Bitmap mutableBMP= input.copy(Bitmap.Config.ARGB_8888,true);
-        Canvas canvas = new Canvas(mutableBMP);
-        InputImage image = InputImage.fromBitmap(input, 0);
-        Task<List<Face>> result =
-                detector.process(image)
-                        .addOnSuccessListener(
-                                new OnSuccessListener<List<Face>>() {
-                                    @Override
-                                    public void onSuccess(List<Face> faces) {
-                                        Log.d("traces","Len="+faces.size());
-                                        for (Face face : faces) {
-                                            Rect bounds = face.getBoundingBox();
-                                            //int trackingid=face.getTrackingId();
-                                            Paint p1 = new Paint();
-                                            p1.setColor(Color.RED);
-                                            p1.setStyle(Paint.Style.STROKE);
-                                            p1.setStrokeWidth(5);
-                                            PerformFaceRecognition(bounds,mutableBMP);
-                                            canvas.drawRect(bounds, p1);
-                                        }
-                                        //imageView.setImageBitmap(mutableBMP);
-                                        Log.d("traces","flag 1 size of faces"+faces.size());
-                                    }
-                                })
-                        .addOnFailureListener(
-                                new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        // Task failed with an exception
-                                        // ...
-                                    }
-                                });
-    }
-    //TODO perform face recognition
-    public void PerformFaceRecognition(Rect bound, Bitmap input){
-            Log.d("traces","flag 2"+bound.toString());
-        if(bound.top<0){
-            bound.top=0;
-        }
-        if(bound.left<0){
-            bound.left=0;
-        }
-        if(bound.bottom>input.getHeight()){
-            bound.bottom=input.getHeight()-1;
-        }
-        if(bound.right>input.getWidth()){
-            bound.right=input.getWidth()-1;}
-        Log.d("traces","flag 3"+bound.toString());
-        Bitmap cropped = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(cropped, 160, 160, true);
-        Log.d("traces","flag 4"+resizedBitmap.getHeight()+","+resizedBitmap.getWidth());
-        ByteBuffer byteBuffer = bitmapToByteBuffer(resizedBitmap, resizedBitmap.getWidth(), resizedBitmap. getHeight());
-        Log.d("traces","flag 5"+byteBuffer.toString());
-        imageView.setImageBitmap(resizedBitmap);
-        try {
-            Log.d("traces","flag 6");
-            Facenet512 model = Facenet512.newInstance(this);
-            Log.d("traces","flag 7");
-            //Creates inputs for reference.
-            TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 160, 160, 3}, DataType.FLOAT32);
-            Log.d("traces","flag 8");
-            inputFeature0.loadBuffer(byteBuffer);
-            Log.d("traces","flag 9");
-            // Runs model inference and gets result.
-            Facenet512.Outputs outputs = model.process(inputFeature0);
-            TensorBuffer outputFeature0 = outputs.getOutputFeature0AsTensorBuffer();
-            Log.d("traces","flag 10"+ Arrays.toString(outputFeature0.getShape()));
-
-            // Releases model resources if no longer used.
-            model.close();
-        } catch (IOException e) {
-            // TODO Handle the exception
-        }
-    }
-
-    public static ByteBuffer bitmapToByteBuffer(Bitmap bitmap, int width, int height) {
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4* width * height * 3);
-        byteBuffer.order(ByteOrder.nativeOrder());
-        int[] intValues = new int[width * height];
-        bitmap.getPixels(intValues, 0, width, 0, 0, width, height);
-        int pixel= 0;
-        for (int i = 0; i < width; ++i) {
-            for (int j = 0; j < height; ++j) {
-                int val = intValues[pixel++];
-                byteBuffer.putFloat(((val >> 16) & 0xFF) / 255.0f);
-                byteBuffer.putFloat(((val >> 8) & 0xFF) / 255.0f);
-                byteBuffer.putFloat((val & 0xFF) / 255.0f);}
-        }
-        return byteBuffer;
-    }
-
 
     @Override
-        protected void onDestroy() {
-            super.onDestroy();
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_recognition);
 
+        previewView = findViewById(R.id.previewView);
+        overlayView = findViewById(R.id.overlayView);
+        statusText = findViewById(R.id.statusText);
+        attendanceTypeGroup = findViewById(R.id.attendanceTypeGroup);
+
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        cameraExecutor = Executors.newSingleThreadExecutor();
+
+        findViewById(R.id.btnFlipCamera).setOnClickListener(v -> flipCamera());
+        findViewById(R.id.btnGallery).setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            galleryLauncher.launch(intent);
+        });
+
+        FaceDetectorOptions options = new FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .build();
+        detector = FaceDetection.getClient(options);
+
+        try {
+            model = Facenet512.newInstance(this);
+        } catch (IOException e) {
+            Log.e("RecognitionActivity", "Model error", e);
+        }
+
+        loadEmbeddings();
+
+        if (allPermissionsGranted()) {
+            startCamera();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_CODE);
         }
     }
+
+    private void flipCamera() {
+        if (currentCameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+            currentCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+        } else {
+            currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+        }
+        startCamera();
+    }
+
+    private void startCamera() {
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(() -> {
+            try {
+                cameraProvider = cameraProviderFuture.get();
+                Preview preview = new Preview.Builder().build();
+                preview.setSurfaceProvider(previewView.getSurfaceProvider());
+
+                ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build();
+
+                imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
+                    if (isProcessing) {
+                        imageProxy.close();
+                        return;
+                    }
+                    isProcessing = true;
+                    runOnUiThread(() -> {
+                        Bitmap bitmap = previewView.getBitmap();
+                        if (bitmap != null) {
+                            processLiveFrame(bitmap, true);
+                        }
+                        imageProxy.close();
+                        isProcessing = false;
+                    });
+                });
+
+                cameraProvider.unbindAll();
+                cameraProvider.bindToLifecycle(this, currentCameraSelector, preview, imageAnalysis);
+
+            } catch (ExecutionException | InterruptedException e) {
+                Log.e("RecognitionActivity", "Camera start failed", e);
+            }
+        }, ContextCompat.getMainExecutor(this));
+    }
+
+    private void processLiveFrame(Bitmap bitmap, boolean isLiveCamera) {
+        InputImage image = InputImage.fromBitmap(bitmap, 0);
+        detector.process(image)
+                .addOnSuccessListener(faces -> {
+                    if (faces.isEmpty()) {
+                        overlayView.setImageBitmap(null);
+                        return;
+                    }
+
+                    Bitmap canvasBitmap = null;
+                    Canvas canvas = null;
+                    Paint boxPaint = null;
+                    Paint textPaint = null;
+
+                    if (isLiveCamera) {
+                        canvasBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+                        canvas = new Canvas(canvasBitmap);
+                        
+                        boxPaint = new Paint();
+                        boxPaint.setStyle(Paint.Style.STROKE);
+                        boxPaint.setStrokeWidth(5f);
+
+                        textPaint = new Paint();
+                        textPaint.setTextSize(50f);
+                        textPaint.setFakeBoldText(true);
+                    }
+
+                    for (Face face : faces) {
+                        Rect bounds = face.getBoundingBox();
+                        String name = recognizeFace(bitmap, bounds);
+                        
+                        boolean isRecognized = !name.equals("Unknown");
+                        int color = isRecognized ? Color.GREEN : Color.RED;
+                        
+                        String displayText = name;
+                        if (isRecognized) {
+                            markAttendance(name);
+                        }
+                        
+                        if (isLiveCamera) {
+                            boxPaint.setColor(color);
+                            textPaint.setColor(color);
+                            canvas.drawRect(bounds, boxPaint);
+                            canvas.drawText(displayText, bounds.left, bounds.top - 10, textPaint);
+                        }
+                    }
+                    if (isLiveCamera) {
+                        overlayView.setImageBitmap(canvasBitmap);
+                    }
+                });
+    }
+
+    private void processGalleryImage(Uri uri) {
+        try {
+            ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
+            Bitmap bitmap = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
+            pfd.close();
+            processLiveFrame(bitmap, false);
+        } catch (IOException e) {
+            Log.e("RecognitionActivity", "Gallery error", e);
+        }
+    }
+
+    private String recognizeFace(Bitmap bitmap, Rect bounds) {
+        if (model == null) return "Unknown";
+        try {
+            int left = Math.max(0, bounds.left);
+            int top = Math.max(0, bounds.top);
+            int right = Math.min(bitmap.getWidth(), bounds.right);
+            int bottom = Math.min(bitmap.getHeight(), bounds.bottom);
+            int width = right - left;
+            int height = bottom - top;
+
+            if (width <= 0 || height <= 0) return "Unknown";
+
+            Bitmap cropped = Bitmap.createBitmap(bitmap, left, top, width, height);
+            Bitmap resized = Bitmap.createScaledBitmap(cropped, 160, 160, true);
+            
+            ByteBuffer buffer = ByteBuffer.allocateDirect(4 * 160 * 160 * 3);
+            buffer.order(ByteOrder.nativeOrder());
+            int[] pixels = new int[160 * 160];
+            resized.getPixels(pixels, 0, 160, 0, 0, 160, 160);
+            for (int val : pixels) {
+                buffer.putFloat(((val >> 16) & 0xFF) / 255.0f);
+                buffer.putFloat(((val >> 8) & 0xFF) / 255.0f);
+                buffer.putFloat((val & 0xFF) / 255.0f);
+            }
+
+            TensorBuffer input = TensorBuffer.createFixedSize(new int[]{1, 160, 160, 3}, DataType.FLOAT32);
+            input.loadBuffer(buffer);
+            Facenet512.Outputs outputs = model.process(input);
+            float[] emb = outputs.getOutputFeature0AsTensorBuffer().getFloatArray();
+            
+            // L2 Normalize
+            float sum = 0;
+            for (float v : emb) sum += v * v;
+            float norm = (float) Math.sqrt(sum);
+            if (norm > 0) for (int i = 0; i < emb.length; i++) emb[i] /= norm;
+
+            return findMatch(emb);
+        } catch (Exception e) {
+            return "Unknown";
+        }
+    }
+
+    private String findMatch(float[] embedding) {
+        String name = "Unknown";
+        float minDistance = 0.75f;
+        for (Map.Entry<String, float[]> entry : faceEmbeddingsMap.entrySet()) {
+            float dist = 0;
+            float[] stored = entry.getValue();
+            for (int i = 0; i < embedding.length; i++) {
+                float diff = embedding[i] - stored[i];
+                dist += diff * diff;
+            }
+            dist = (float) Math.sqrt(dist);
+            if (dist < minDistance) {
+                minDistance = dist;
+                name = entry.getKey();
+            }
+        }
+        return name;
+    }
+
+    private void markAttendance(String name) {
+        String type = attendanceTypeGroup.getCheckedRadioButtonId() == R.id.radioCheckIn ? "IN" : "OUT";
+        long currentTime = System.currentTimeMillis();
+        
+        // Throttle to 60 seconds (1 minute) per person to prevent duplicate logs
+        if (lastMarkedTime.containsKey(name) && (currentTime - lastMarkedTime.get(name) < 60000)) {
+            return;
+        }
+        
+        lastMarkedTime.put(name, currentTime);
+        hasBlinked.put(name, false); // Reset blink
+        
+        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        String time = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+        
+        LogEntity log = new LogEntity();
+        log.name = name;
+        log.date = date;
+        log.time = time;
+        log.type = type;
+        
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            AppDatabase.getDatabase(this).logDao().insertLog(log);
+            runOnUiThread(() -> {
+                Toast.makeText(this, "Marked " + type + " for " + name, Toast.LENGTH_SHORT).show();
+            });
+        });
+    }
+
+    private void loadEmbeddings() {
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            List<MemberEntity> members = AppDatabase.getDatabase(this).memberDao().getAllMembers();
+            HashMap<String, float[]> map = new HashMap<>();
+            for (MemberEntity m : members) {
+                map.put(m.name, m.embedding);
+            }
+            faceEmbeddingsMap = map;
+            runOnUiThread(() -> statusText.setText("Registered members: " + faceEmbeddingsMap.size()));
+        });
+    }
+
+    private boolean allPermissionsGranted() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_CODE && allPermissionsGranted()) {
+            startCamera();
+        } else {
+            Toast.makeText(this, "Permission required", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        cameraExecutor.shutdown();
+        if (model != null) model.close();
+    }
+}
