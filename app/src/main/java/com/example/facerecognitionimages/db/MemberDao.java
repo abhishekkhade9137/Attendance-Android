@@ -20,4 +20,7 @@ public interface MemberDao {
     
     @Query("SELECT COUNT(*) FROM members")
     int getMemberCount();
+
+    @Query("DELETE FROM members WHERE name = :name AND id NOT IN (SELECT id FROM members WHERE name = :name ORDER BY id DESC LIMIT :limit)")
+    void keepRecentFaces(String name, int limit);
 }

@@ -6,7 +6,9 @@ import androidx.room.PrimaryKey;
 
 @Entity(tableName = "members")
 public class MemberEntity {
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
+    public int id;
+
     @NonNull
     public String name;
 

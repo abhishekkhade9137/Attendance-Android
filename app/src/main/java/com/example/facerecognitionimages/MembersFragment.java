@@ -55,14 +55,14 @@ public class MembersFragment extends Fragment {
     private void loadMembers() {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             List<MemberEntity> members = AppDatabase.getDatabase(requireContext()).memberDao().getAllMembers();
-            List<String> names = new ArrayList<>();
+            java.util.HashSet<String> uniqueNames = new java.util.HashSet<>();
             for (MemberEntity m : members) {
-                names.add(m.name);
+                uniqueNames.add(m.name);
             }
             if (getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
                     memberList.clear();
-                    memberList.addAll(names);
+                    memberList.addAll(uniqueNames);
                     if (memberList.isEmpty()) {
                         emptyState.setVisibility(View.VISIBLE);
                         recyclerView.setVisibility(View.GONE);
@@ -82,13 +82,18 @@ public class MembersFragment extends Fragment {
             member.name = name;
             AppDatabase.getDatabase(requireContext()).memberDao().deleteMember(member);
             
-            // Delete image file
-            File imgFile = new File(requireContext().getFilesDir(), name + "_face.png");
-            if (imgFile.exists()) {
-                imgFile.delete();
+            // Delete all image files for this person
+            File dir = requireContext().getFilesDir();
+            File[] files = dir.listFiles((d, f) -> f.startsWith(name + "_") && f.endsWith("_face.png"));
+            if (files != null) {
+                for (File f : files) f.delete();
             }
+            File legacy = new File(dir, name + "_face.png");
+            if (legacy.exists()) legacy.delete();
             
             loadMembers();
         });
     }
+
+
 }

@@ -8,6 +8,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.widget.RadioGroup;
+import android.widget.Button;
+import androidx.appcompat.app.AlertDialog;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -57,6 +61,8 @@ public class LogsFragment extends Fragment {
             tvCurrentDate.setText("All Time");
             loadLogs();
         });
+
+        view.findViewById(R.id.fabManualEntry).setOnClickListener(v -> showManualEntryDialog());
 
         return view;
     }
@@ -171,5 +177,54 @@ public class LogsFragment extends Fragment {
         } catch (Exception e) {
             Toast.makeText(requireContext(), "Export failed", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void showManualEntryDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_manual_entry, null);
+        builder.setView(dialogView);
+        
+        EditText etName = dialogView.findViewById(R.id.etName);
+        EditText etDate = dialogView.findViewById(R.id.etDate);
+        EditText etTime = dialogView.findViewById(R.id.etTime);
+        RadioGroup rgType = dialogView.findViewById(R.id.rgType);
+        
+        // Default to today and now
+        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        String time = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+        etDate.setText(today);
+        etTime.setText(time);
+        
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String name = etName.getText().toString().trim();
+            String date = etDate.getText().toString().trim();
+            String t = etTime.getText().toString().trim();
+            String type = rgType.getCheckedRadioButtonId() == R.id.rbIn ? "IN" : "OUT";
+            
+            if (name.isEmpty() || date.isEmpty() || t.isEmpty()) {
+                Toast.makeText(requireContext(), "All fields are required", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            LogEntity log = new LogEntity();
+            log.name = name;
+            log.date = date;
+            log.time = t;
+            log.type = type;
+            
+            AppDatabase.databaseWriteExecutor.execute(() -> {
+                AppDatabase.getDatabase(requireContext()).logDao().insertLog(log);
+                loadLogs();
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> 
+                        Toast.makeText(requireContext(), "Manual entry added", Toast.LENGTH_SHORT).show()
+                    );
+                }
+            });
+        });
+        
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 }

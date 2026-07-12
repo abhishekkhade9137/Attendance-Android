@@ -36,33 +36,7 @@
         app:layout_constraintStart_toEndOf="@id/btnBack"
         app:layout_constraintTop_toTopOf="@id/btnBack" />
 
-    <RadioGroup
-        android:id="@+id/attendanceTypeGroup"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="@id/btnBack"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/btnBack">
 
-        <RadioButton
-            android:id="@+id/radioCheckIn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:buttonTint="@color/black"
-            android:textColor="@color/black"
-            android:text="In" />
-
-        <RadioButton
-            android:id="@+id/radioCheckOut"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:buttonTint="@color/black"
-            android:textColor="@color/black"
-            android:text="Out" />
-    </RadioGroup>
 
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
@@ -121,6 +95,28 @@
             android:paddingVertical="8dp"
             android:text="Initializing..."
             android:textColor="@color/textColorPrimary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/processingCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="#CC000000"
+        app:layout_constraintTop_toBottomOf="@id/header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:text="Processing..."
+            android:textColor="@color/white"
             android:textSize="14sp"
             android:textStyle="bold" />
     </androidx.cardview.widget.CardView>

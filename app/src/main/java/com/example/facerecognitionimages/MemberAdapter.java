@@ -42,8 +42,18 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MemberView
         String name = memberList.get(position);
         holder.memberName.setText(name);
         
-        File imgFile = new File(holder.itemView.getContext().getFilesDir(), name + "_face.png");
-        if (imgFile.exists()) {
+        File dir = holder.itemView.getContext().getFilesDir();
+        File[] files = dir.listFiles((d, f) -> f.startsWith(name + "_") && f.endsWith("_face.png"));
+        File imgFile = null;
+        if (files == null || files.length == 0) {
+            File legacy = new File(dir, name + "_face.png");
+            if (legacy.exists()) imgFile = legacy;
+        } else {
+            java.util.Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
+            imgFile = files[0];
+        }
+
+        if (imgFile != null && imgFile.exists()) {
             Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
             holder.memberImage.setImageBitmap(myBitmap);
         } else {

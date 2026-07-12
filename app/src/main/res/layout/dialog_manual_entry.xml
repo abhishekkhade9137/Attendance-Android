@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@color/windowBackground">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Manual Attendance Entry"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Name"
+        android:textColor="@color/black"
+        android:textColorHint="@color/textColorSecondary"
+        android:inputType="textPersonName"
+        android:backgroundTint="@color/black"
+        android:layout_marginBottom="12dp" />
+
+    <EditText
+        android:id="@+id/etDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Date (YYYY-MM-DD)"
+        android:textColor="@color/black"
+        android:textColorHint="@color/textColorSecondary"
+        android:inputType="date"
+        android:backgroundTint="@color/black"
+        android:layout_marginBottom="12dp" />
+
+    <EditText
+        android:id="@+id/etTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Time (HH:mm:ss)"
+        android:textColor="@color/black"
+        android:textColorHint="@color/textColorSecondary"
+        android:inputType="time"
+        android:backgroundTint="@color/black"
+        android:layout_marginBottom="16dp" />
+
+    <RadioGroup
+        android:id="@+id/rgType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp">
+
+        <RadioButton
+            android:id="@+id/rbIn"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="IN"
+            android:textColor="@color/black"
+            android:checked="true"
+            android:buttonTint="@color/black" />
+
+        <RadioButton
+            android:id="@+id/rbOut"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="OUT"
+            android:textColor="@color/black"
+            android:buttonTint="@color/black" />
+    </RadioGroup>
+
+</LinearLayout>

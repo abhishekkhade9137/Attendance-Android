@@ -10,7 +10,7 @@ import androidx.room.TypeConverters;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = {LogEntity.class, MemberEntity.class}, version = 1, exportSchema = false)
+@Database(entities = {LogEntity.class, MemberEntity.class}, version = 3, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     public abstract LogDao logDao();
@@ -26,6 +26,7 @@ public abstract class AppDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             AppDatabase.class, "attendance_database")
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }

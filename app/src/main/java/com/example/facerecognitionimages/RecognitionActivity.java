@@ -5,14 +5,12 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
@@ -20,18 +18,14 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.CameraInfo;
 import androidx.camera.core.CameraSelector;
-import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
@@ -40,10 +34,8 @@ import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.facerecognitionimages.ml.Facenet512;
+import com.example.facerecognitionimages.ml.Facenet;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
@@ -57,20 +49,17 @@ import com.example.facerecognitionimages.db.MemberEntity;
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -80,17 +69,41 @@ public class RecognitionActivity extends AppCompatActivity {
     private PreviewView previewView;
     private ImageView overlayView;
     private TextView statusText;
+    private View processingCard;
     private ExecutorService cameraExecutor;
+    private ExecutorService recognitionExecutor;
     private CameraSelector currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
     private ProcessCameraProvider cameraProvider;
 
     private FaceDetector detector;
-    private Facenet512 model;
-    public static HashMap<String, float[]> faceEmbeddingsMap = new HashMap<>();
+    private Facenet model;
+    public static class PersonEmbedding {
+        public String name;
+        public float[] embedding;
+        public PersonEmbedding(String name, float[] embedding) {
+            this.name = name;
+            this.embedding = embedding;
+        }
+    }
+    public static java.util.List<PersonEmbedding> faceEmbeddingsList = new java.util.ArrayList<>();
+    private static class QueuedFace {
+        Bitmap bitmap;
+        Integer trackingId;
+        QueuedFace(Bitmap b, Integer id) {
+            bitmap = b; trackingId = id;
+        }
+    }
+
     private Map<String, Long> lastMarkedTime = new HashMap<>();
-    private Map<String, Boolean> hasBlinked = new HashMap<>();
-    private boolean isProcessing = false;
-    private android.widget.RadioGroup attendanceTypeGroup;
+    private Map<Integer, Long> lastQueuedTime = new HashMap<>();
+    private Map<Integer, String> recognizedTrackingIds = new ConcurrentHashMap<>();
+    private ConcurrentLinkedQueue<QueuedFace> faceProcessingQueue = new ConcurrentLinkedQueue<>();
+    private String currentAttendanceType = "IN";
+    
+    private Bitmap reusableBitmap = null;
+    private Canvas reusableCanvas = null;
+    private Paint boxPaint = new Paint();
+    private Paint textPaint = new Paint();
 
     private static final int PERMISSION_CODE = 100;
 
@@ -99,7 +112,10 @@ public class RecognitionActivity extends AppCompatActivity {
             result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     Uri imageUri = result.getData().getData();
-                    processGalleryImage(imageUri);
+                    Intent intent = new Intent(RecognitionActivity.this, GroupPhotoActivity.class);
+                    intent.putExtra("IMAGE_URI", imageUri.toString());
+                    intent.putExtra("SCAN_MODE", currentAttendanceType);
+                    startActivity(intent);
                 }
             });
 
@@ -111,10 +127,26 @@ public class RecognitionActivity extends AppCompatActivity {
         previewView = findViewById(R.id.previewView);
         overlayView = findViewById(R.id.overlayView);
         statusText = findViewById(R.id.statusText);
-        attendanceTypeGroup = findViewById(R.id.attendanceTypeGroup);
+        processingCard = findViewById(R.id.processingCard);
+
+        String initialMode = getIntent().getStringExtra("SCAN_MODE");
+        if (initialMode != null) {
+            currentAttendanceType = initialMode;
+        } else {
+            currentAttendanceType = "IN";
+        }
+
+        boxPaint.setStyle(Paint.Style.STROKE);
+        boxPaint.setStrokeWidth(5f);
+        textPaint.setTextSize(50f);
+        textPaint.setFakeBoldText(true);
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         cameraExecutor = Executors.newSingleThreadExecutor();
+        recognitionExecutor = Executors.newSingleThreadExecutor(r -> new Thread(() -> {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+            r.run();
+        }));
 
         findViewById(R.id.btnFlipCamera).setOnClickListener(v -> flipCamera());
         findViewById(R.id.btnGallery).setOnClickListener(v -> {
@@ -123,18 +155,19 @@ public class RecognitionActivity extends AppCompatActivity {
         });
 
         FaceDetectorOptions options = new FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .enableTracking()
                 .build();
         detector = FaceDetection.getClient(options);
 
         try {
-            model = Facenet512.newInstance(this);
+            model = Facenet.newInstance(this);
         } catch (IOException e) {
             Log.e("RecognitionActivity", "Model error", e);
         }
 
         loadEmbeddings();
+        startRecognitionLoop();
 
         if (allPermissionsGranted()) {
             startCamera();
@@ -165,121 +198,216 @@ public class RecognitionActivity extends AppCompatActivity {
                         .build();
 
                 imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
-                    if (isProcessing) {
-                        imageProxy.close();
-                        return;
-                    }
-                    isProcessing = true;
+                    // Extract bitmap and pass to UI thread for drawing and MLKit processing
+                    // We must do it on UI thread to ensure bitmap matches previewView accurately for bounds
                     runOnUiThread(() -> {
                         Bitmap bitmap = previewView.getBitmap();
                         if (bitmap != null) {
-                            processLiveFrame(bitmap, true);
+                            InputImage image = InputImage.fromBitmap(bitmap, 0);
+                            detector.process(image)
+                                .addOnSuccessListener(faces -> handleFaces(faces, bitmap))
+                                .addOnCompleteListener(task -> imageProxy.close());
+                        } else {
+                            imageProxy.close();
                         }
-                        imageProxy.close();
-                        isProcessing = false;
                     });
                 });
 
                 cameraProvider.unbindAll();
-                cameraProvider.bindToLifecycle(this, currentCameraSelector, preview, imageAnalysis);
 
-            } catch (ExecutionException | InterruptedException e) {
+                try {
+                    if (!cameraProvider.hasCamera(currentCameraSelector)) {
+                        if (currentCameraSelector == CameraSelector.DEFAULT_BACK_CAMERA && cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)) {
+                            currentCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+                        } else if (currentCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA && cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) {
+                            currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+                        } else {
+                            runOnUiThread(() -> Toast.makeText(this, "No camera found on this device.", Toast.LENGTH_LONG).show());
+                            return;
+                        }
+                    }
+                    cameraProvider.bindToLifecycle(this, currentCameraSelector, preview, imageAnalysis);
+                } catch (Exception e) {
+                    Log.e("RecognitionActivity", "Camera binding failed", e);
+                    runOnUiThread(() -> Toast.makeText(this, "Camera error: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                }
+
+            } catch (Exception e) {
                 Log.e("RecognitionActivity", "Camera start failed", e);
+                runOnUiThread(() -> Toast.makeText(this, "Camera initialization failed.", Toast.LENGTH_LONG).show());
             }
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private void processLiveFrame(Bitmap bitmap, boolean isLiveCamera) {
-        InputImage image = InputImage.fromBitmap(bitmap, 0);
-        detector.process(image)
-                .addOnSuccessListener(faces -> {
-                    if (faces.isEmpty()) {
-                        overlayView.setImageBitmap(null);
-                        return;
+    private void handleFaces(List<Face> faces, Bitmap bitmap) {
+        if (faces.isEmpty()) {
+            if (reusableCanvas != null) {
+                reusableCanvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);
+                overlayView.invalidate();
+            }
+            return;
+        }
+
+        if (reusableBitmap == null || reusableBitmap.getWidth() != bitmap.getWidth() || reusableBitmap.getHeight() != bitmap.getHeight()) {
+            reusableBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+            reusableCanvas = new Canvas(reusableBitmap);
+        }
+        
+        reusableCanvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);
+
+        long currentTime = System.currentTimeMillis();
+
+        for (Face face : faces) {
+            Rect bounds = face.getBoundingBox();
+            Integer trackingId = face.getTrackingId();
+
+            if (trackingId != null && recognizedTrackingIds.containsKey(trackingId)) {
+                // Already recognized, just draw green box and name
+                boxPaint.setColor(Color.GREEN);
+                reusableCanvas.drawRect(bounds, boxPaint);
+                textPaint.setColor(Color.GREEN);
+                reusableCanvas.drawText(recognizedTrackingIds.get(trackingId), bounds.left, bounds.top - 10, textPaint);
+                continue;
+            }
+
+            boxPaint.setColor(Color.WHITE);
+            reusableCanvas.drawRect(bounds, boxPaint);
+
+            if (trackingId != null) {
+                Long lastQueued = lastQueuedTime.get(trackingId);
+                // Queue same face at most once every 1 second (1000ms) to ensure it gets recognized quickly if initial crop was bad
+                if (lastQueued == null || currentTime - lastQueued > 1000) {
+                    lastQueuedTime.put(trackingId, currentTime);
+                    
+                    int left = Math.max(0, bounds.left);
+                    int top = Math.max(0, bounds.top);
+                    int right = Math.min(bitmap.getWidth(), bounds.right);
+                    int bottom = Math.min(bitmap.getHeight(), bounds.bottom);
+                    int width = right - left;
+                    int height = bottom - top;
+
+                    if (width > 0 && height > 0) {
+                        Bitmap cropped = Bitmap.createBitmap(bitmap, left, top, width, height);
+                        faceProcessingQueue.add(new QueuedFace(cropped, trackingId));
                     }
+                }
+            }
+        }
+        overlayView.setImageBitmap(reusableBitmap);
+    }
 
-                    Bitmap canvasBitmap = null;
-                    Canvas canvas = null;
-                    Paint boxPaint = null;
-                    Paint textPaint = null;
-
-                    if (isLiveCamera) {
-                        canvasBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
-                        canvas = new Canvas(canvasBitmap);
-                        
-                        boxPaint = new Paint();
-                        boxPaint.setStyle(Paint.Style.STROKE);
-                        boxPaint.setStrokeWidth(5f);
-
-                        textPaint = new Paint();
-                        textPaint.setTextSize(50f);
-                        textPaint.setFakeBoldText(true);
-                    }
-
-                    for (Face face : faces) {
-                        Rect bounds = face.getBoundingBox();
-                        String name = recognizeFace(bitmap, bounds);
-                        
-                        boolean isRecognized = !name.equals("Unknown");
-                        int color = isRecognized ? Color.GREEN : Color.RED;
-                        
-                        String displayText = name;
-                        if (isRecognized) {
-                            markAttendance(name);
+    private void startRecognitionLoop() {
+        recognitionExecutor.execute(() -> {
+            while (!Thread.interrupted()) {
+                QueuedFace qFace = faceProcessingQueue.poll();
+                if (qFace != null) {
+                    runOnUiThread(() -> processingCard.setVisibility(View.VISIBLE));
+                    
+                    String name = recognizeFace(qFace.bitmap);
+                    if (!name.equals("Unknown")) {
+                        if (qFace.trackingId != null) {
+                            recognizedTrackingIds.put(qFace.trackingId, name);
                         }
-                        
-                        if (isLiveCamera) {
-                            boxPaint.setColor(color);
-                            textPaint.setColor(color);
-                            canvas.drawRect(bounds, boxPaint);
-                            canvas.drawText(displayText, bounds.left, bounds.top - 10, textPaint);
+                        markAttendance(name);
+                    }
+                    
+                    runOnUiThread(() -> {
+                        if (faceProcessingQueue.isEmpty()) {
+                            processingCard.setVisibility(View.GONE);
                         }
+                    });
+                } else {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        break;
                     }
-                    if (isLiveCamera) {
-                        overlayView.setImageBitmap(canvasBitmap);
-                    }
-                });
+                }
+            }
+        });
+    }
+
+    private Bitmap getBitmapFromUri(Uri uri) throws IOException {
+        ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
+        Bitmap bitmap = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
+        pfd.close();
+
+        try (java.io.InputStream input = getContentResolver().openInputStream(uri)) {
+            if (input != null) {
+                androidx.exifinterface.media.ExifInterface exif = new androidx.exifinterface.media.ExifInterface(input);
+                int orientation = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION, androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL);
+
+                android.graphics.Matrix matrix = new android.graphics.Matrix();
+                switch (orientation) {
+                    case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90:
+                        matrix.postRotate(90);
+                        break;
+                    case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180:
+                        matrix.postRotate(180);
+                        break;
+                    case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270:
+                        matrix.postRotate(270);
+                        break;
+                }
+                if (!matrix.isIdentity()) {
+                    bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                }
+            }
+        }
+        return bitmap;
     }
 
     private void processGalleryImage(Uri uri) {
         try {
-            ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
-            Bitmap bitmap = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
-            pfd.close();
-            processLiveFrame(bitmap, false);
+            Bitmap bitmap = getBitmapFromUri(uri);
+            
+            InputImage image = InputImage.fromBitmap(bitmap, 0);
+            detector.process(image)
+                    .addOnSuccessListener(faces -> {
+                        if (faces.isEmpty()) {
+                            Toast.makeText(this, "No faces found in the selected photo.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        Toast.makeText(this, "Found " + faces.size() + " faces. Processing attendance...", Toast.LENGTH_LONG).show();
+                        for (Face face : faces) {
+                            Rect bounds = face.getBoundingBox();
+                            int left = Math.max(0, bounds.left);
+                            int top = Math.max(0, bounds.top);
+                            int right = Math.min(bitmap.getWidth(), bounds.right);
+                            int bottom = Math.min(bitmap.getHeight(), bounds.bottom);
+                            int width = right - left;
+                            int height = bottom - top;
+                            if (width > 0 && height > 0) {
+                                Bitmap cropped = Bitmap.createBitmap(bitmap, left, top, width, height);
+                                faceProcessingQueue.add(new QueuedFace(cropped, face.getTrackingId()));
+                            }
+                        }
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(this, "Failed to analyze photo.", Toast.LENGTH_SHORT).show());
         } catch (IOException e) {
             Log.e("RecognitionActivity", "Gallery error", e);
         }
     }
 
-    private String recognizeFace(Bitmap bitmap, Rect bounds) {
+    private String recognizeFace(Bitmap cropped) {
         if (model == null) return "Unknown";
         try {
-            int left = Math.max(0, bounds.left);
-            int top = Math.max(0, bounds.top);
-            int right = Math.min(bitmap.getWidth(), bounds.right);
-            int bottom = Math.min(bitmap.getHeight(), bounds.bottom);
-            int width = right - left;
-            int height = bottom - top;
-
-            if (width <= 0 || height <= 0) return "Unknown";
-
-            Bitmap cropped = Bitmap.createBitmap(bitmap, left, top, width, height);
             Bitmap resized = Bitmap.createScaledBitmap(cropped, 160, 160, true);
-            
+
             ByteBuffer buffer = ByteBuffer.allocateDirect(4 * 160 * 160 * 3);
             buffer.order(ByteOrder.nativeOrder());
             int[] pixels = new int[160 * 160];
             resized.getPixels(pixels, 0, 160, 0, 0, 160, 160);
             for (int val : pixels) {
-                buffer.putFloat(((val >> 16) & 0xFF) / 255.0f);
-                buffer.putFloat(((val >> 8) & 0xFF) / 255.0f);
-                buffer.putFloat((val & 0xFF) / 255.0f);
+                // FaceNet standard normalization: (pixel - 127.5) / 127.5
+                buffer.putFloat((((val >> 16) & 0xFF) - 127.5f) / 127.5f);
+                buffer.putFloat((((val >> 8) & 0xFF) - 127.5f) / 127.5f);
+                buffer.putFloat(((val & 0xFF) - 127.5f) / 127.5f);
             }
 
             TensorBuffer input = TensorBuffer.createFixedSize(new int[]{1, 160, 160, 3}, DataType.FLOAT32);
             input.loadBuffer(buffer);
-            Facenet512.Outputs outputs = model.process(input);
+            Facenet.Outputs outputs = model.process(input);
             float[] emb = outputs.getOutputFeature0AsTensorBuffer().getFloatArray();
             
             // L2 Normalize
@@ -296,10 +424,10 @@ public class RecognitionActivity extends AppCompatActivity {
 
     private String findMatch(float[] embedding) {
         String name = "Unknown";
-        float minDistance = 0.75f;
-        for (Map.Entry<String, float[]> entry : faceEmbeddingsMap.entrySet()) {
+        float minDistance = 1.0f; // FaceNet threshold usually around 1.0 for L2
+        for (PersonEmbedding entry : faceEmbeddingsList) {
             float dist = 0;
-            float[] stored = entry.getValue();
+            float[] stored = entry.embedding;
             for (int i = 0; i < embedding.length; i++) {
                 float diff = embedding[i] - stored[i];
                 dist += diff * diff;
@@ -307,37 +435,42 @@ public class RecognitionActivity extends AppCompatActivity {
             dist = (float) Math.sqrt(dist);
             if (dist < minDistance) {
                 minDistance = dist;
-                name = entry.getKey();
+                name = entry.name;
             }
         }
         return name;
     }
 
+    private void setAttendanceType(String type) {
+        currentAttendanceType = type;
+    }
+
     private void markAttendance(String name) {
-        String type = attendanceTypeGroup.getCheckedRadioButtonId() == R.id.radioCheckIn ? "IN" : "OUT";
-        long currentTime = System.currentTimeMillis();
-        
-        // Throttle to 60 seconds (1 minute) per person to prevent duplicate logs
-        if (lastMarkedTime.containsKey(name) && (currentTime - lastMarkedTime.get(name) < 60000)) {
-            return;
-        }
-        
-        lastMarkedTime.put(name, currentTime);
-        hasBlinked.put(name, false); // Reset blink
-        
-        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        String time = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
-        
-        LogEntity log = new LogEntity();
-        log.name = name;
-        log.date = date;
-        log.time = time;
-        log.type = type;
-        
-        AppDatabase.databaseWriteExecutor.execute(() -> {
-            AppDatabase.getDatabase(this).logDao().insertLog(log);
-            runOnUiThread(() -> {
-                Toast.makeText(this, "Marked " + type + " for " + name, Toast.LENGTH_SHORT).show();
+        runOnUiThread(() -> {
+            String type = currentAttendanceType;
+            long currentTime = System.currentTimeMillis();
+            
+            // Throttle to 60 seconds (1 minute) per person to prevent duplicate logs
+            if (lastMarkedTime.containsKey(name) && (currentTime - lastMarkedTime.get(name) < 60000)) {
+                return;
+            }
+            
+            lastMarkedTime.put(name, currentTime);
+            
+            String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+            String time = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+            
+            LogEntity log = new LogEntity();
+            log.name = name;
+            log.date = date;
+            log.time = time;
+            log.type = type;
+            
+            AppDatabase.databaseWriteExecutor.execute(() -> {
+                AppDatabase.getDatabase(this).logDao().insertLog(log);
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Marked " + type + " for " + name, Toast.LENGTH_SHORT).show();
+                });
             });
         });
     }
@@ -345,12 +478,16 @@ public class RecognitionActivity extends AppCompatActivity {
     private void loadEmbeddings() {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             List<MemberEntity> members = AppDatabase.getDatabase(this).memberDao().getAllMembers();
-            HashMap<String, float[]> map = new HashMap<>();
+            java.util.List<PersonEmbedding> list = new java.util.ArrayList<>();
             for (MemberEntity m : members) {
-                map.put(m.name, m.embedding);
+                list.add(new PersonEmbedding(m.name, m.embedding));
             }
-            faceEmbeddingsMap = map;
-            runOnUiThread(() -> statusText.setText("Registered members: " + faceEmbeddingsMap.size()));
+            faceEmbeddingsList = list;
+            
+            // Count unique members for the UI
+            java.util.HashSet<String> uniqueNames = new java.util.HashSet<>();
+            for (PersonEmbedding p : list) uniqueNames.add(p.name);
+            runOnUiThread(() -> statusText.setText("Registered members: " + uniqueNames.size() + " (" + list.size() + " faces)"));
         });
     }
 
@@ -373,6 +510,7 @@ public class RecognitionActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         cameraExecutor.shutdown();
+        recognitionExecutor.shutdownNow();
         if (model != null) model.close();
     }
 }

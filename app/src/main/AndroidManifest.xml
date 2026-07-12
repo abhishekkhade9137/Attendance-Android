@@ -45,6 +45,10 @@
             android:name=".LogsActivity"
             android:exported="false">
         </activity>
+        <activity
+            android:name=".GroupPhotoActivity"
+            android:exported="false">
+        </activity>
     </application>
 
 </manifest>
