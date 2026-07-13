@@ -13,10 +13,16 @@ import java.util.List;
 
 public class LogAdapter extends RecyclerView.Adapter<LogAdapter.LogViewHolder> {
 
-    private List<String> logList;
+    public interface OnLogDeleteListener {
+        void onDeleteClick(int logId, int position);
+    }
 
-    public LogAdapter(List<String> logList) {
+    private List<String> logList;
+    private OnLogDeleteListener deleteListener;
+
+    public LogAdapter(List<String> logList, OnLogDeleteListener deleteListener) {
         this.logList = logList;
+        this.deleteListener = deleteListener;
     }
 
     @NonNull
@@ -46,6 +52,17 @@ public class LogAdapter extends RecyclerView.Adapter<LogAdapter.LogViewHolder> {
                 } else {
                     holder.logType.setTextColor(Color.parseColor("#666666")); // Gray for OUT
                     holder.statusIndicator.setBackgroundColor(Color.parseColor("#666666"));
+                }
+                if (parts.length >= 5 && deleteListener != null) {
+                    try {
+                        final int logId = Integer.parseInt(parts[4]);
+                        holder.itemView.setOnLongClickListener(v -> {
+                            deleteListener.onDeleteClick(logId, position);
+                            return true;
+                        });
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         } else {

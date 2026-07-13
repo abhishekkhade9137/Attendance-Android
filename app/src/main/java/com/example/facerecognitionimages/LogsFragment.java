@@ -67,7 +67,24 @@ public class LogsFragment extends Fragment {
         swipeRefreshLayout.setOnRefreshListener(this::loadLogs);
         
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new LogAdapter(filteredList);
+        adapter = new LogAdapter(filteredList, (logId, position) -> {
+            new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Delete Log")
+                .setMessage("Are you sure you want to delete this specific log entry?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    AppDatabase.databaseWriteExecutor.execute(() -> {
+                        AppDatabase.getDatabase(requireContext()).logDao().deleteLogById(logId);
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                loadLogs();
+                                UIHelper.showSuccessSnackbar(requireView(), "Log deleted");
+                            });
+                        }
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+        });
         recyclerView.setAdapter(adapter);
         
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -156,7 +173,7 @@ public class LogsFragment extends Fragment {
                     }
                 }
                 
-                formattedLogs.add(log.name + "|" + log.date + "|" + log.time + "|" + typeStr);
+                formattedLogs.add(log.name + "|" + log.date + "|" + log.time + "|" + typeStr + "|" + log.id);
             }
             
             if (getActivity() != null) {

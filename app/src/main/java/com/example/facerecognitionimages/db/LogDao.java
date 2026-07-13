@@ -25,4 +25,7 @@ public interface LogDao {
     
     @Query("DELETE FROM logs")
     void deleteAllLogs();
+    
+    @Query("DELETE FROM logs WHERE id = :id")
+    void deleteLogById(int id);
 }
