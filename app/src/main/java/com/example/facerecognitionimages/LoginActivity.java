@@ -6,9 +6,11 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.TextView;
+import com.example.facerecognitionimages.utils.UIHelper;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -25,6 +27,7 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
@@ -66,7 +69,7 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
             prefs.edit().putString(KEY_PIN, enteredPin).apply();
-            Toast.makeText(this, "PIN set successfully!", Toast.LENGTH_SHORT).show();
+            UIHelper.showSuccessSnackbar(findViewById(android.R.id.content), "PIN set successfully!");
             navigateToMain();
         } else {
             // Verifying existing PIN

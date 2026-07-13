@@ -18,11 +18,13 @@ public class BoundingBoxOverlay extends View {
         public Rect rect;
         public String label;
         public boolean recognized;
+        public float[] embedding;
         
-        public Box(Rect rect, String label, boolean recognized) {
+        public Box(Rect rect, String label, boolean recognized, float[] embedding) {
             this.rect = rect;
             this.label = label;
             this.recognized = recognized;
+            this.embedding = embedding;
         }
     }
 

@@ -21,6 +21,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.facerecognitionimages.utils.UIHelper;
+import android.os.Vibrator;
+import android.os.VibrationEffect;
+import android.media.MediaPlayer;
+import android.media.RingtoneManager;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -63,6 +69,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RecognitionActivity extends AppCompatActivity {
 
@@ -104,6 +111,8 @@ public class RecognitionActivity extends AppCompatActivity {
     private Canvas reusableCanvas = null;
     private Paint boxPaint = new Paint();
     private Paint textPaint = new Paint();
+    
+    private final AtomicBoolean isProcessingFrame = new AtomicBoolean(false);
 
     private static final int PERMISSION_CODE = 100;
 
@@ -206,6 +215,11 @@ public class RecognitionActivity extends AppCompatActivity {
                         .build();
 
                 imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
+                    if (isProcessingFrame.get()) {
+                        imageProxy.close();
+                        return;
+                    }
+                    isProcessingFrame.set(true);
                     // Extract bitmap and pass to UI thread for drawing and MLKit processing
                     // We must do it on UI thread to ensure bitmap matches previewView accurately for bounds
                     runOnUiThread(() -> {
@@ -214,9 +228,11 @@ public class RecognitionActivity extends AppCompatActivity {
                             InputImage image = InputImage.fromBitmap(bitmap, 0);
                             detector.process(image)
                                 .addOnSuccessListener(faces -> handleFaces(faces, bitmap))
+                                .addOnFailureListener(e -> isProcessingFrame.set(false))
                                 .addOnCompleteListener(task -> imageProxy.close());
                         } else {
                             imageProxy.close();
+                            isProcessingFrame.set(false);
                         }
                     });
                 });
@@ -253,6 +269,7 @@ public class RecognitionActivity extends AppCompatActivity {
                 reusableCanvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);
                 overlayView.invalidate();
             }
+            isProcessingFrame.set(false);
             return;
         }
 
@@ -302,6 +319,7 @@ public class RecognitionActivity extends AppCompatActivity {
             }
         }
         overlayView.setImageBitmap(reusableBitmap);
+        isProcessingFrame.set(false);
     }
 
     private void startRecognitionLoop() {
@@ -497,7 +515,26 @@ public class RecognitionActivity extends AppCompatActivity {
             AppDatabase.databaseWriteExecutor.execute(() -> {
                 AppDatabase.getDatabase(this).logDao().insertLog(log);
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "Marked " + type + " for " + name, Toast.LENGTH_SHORT).show();
+                    // Haptic Feedback
+                    Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                    if (vibrator != null && vibrator.hasVibrator()) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                            vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
+                        } else {
+                            vibrator.vibrate(50); // Fallback for older devices
+                        }
+                    }
+                    
+                    // Audio Cue
+                    try {
+                        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
+                        mp.start();
+                        mp.setOnCompletionListener(MediaPlayer::release);
+                    } catch (Exception e) {}
+                    
+                    // Snackbar Notification
+                    UIHelper.showSuccessSnackbar(findViewById(android.R.id.content), "Marked " + type + " for " + name);
                 });
             });
         });

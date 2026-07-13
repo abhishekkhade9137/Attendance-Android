@@ -2,41 +2,9 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-
-    <!-- Face Silhouette -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,34 C46.268,34 40,40.268 40,48 C40,55.732 46.268,62 54,62 C61.732,62 68,55.732 68,48 C68,40.268 61.732,34 54,34 Z M54,66 C39.333,66 26,73.333 26,84 L26,88 L82,88 L82,84 C82,73.333 68.667,66 54,66 Z" />
-
-    <!-- Scanning Corners -->
-    <path
-        android:strokeColor="#10B981"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M38,40 L30,40 L30,48" />
-    <path
-        android:strokeColor="#10B981"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M70,40 L78,40 L78,48" />
-    <path
-        android:strokeColor="#10B981"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M38,76 L30,76 L30,68" />
-    <path
-        android:strokeColor="#10B981"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M70,76 L78,76 L78,68" />
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M9,11.75c-0.69,0 -1.25,0.56 -1.25,1.25s0.56,1.25 1.25,1.25 1.25,-0.56 1.25,-1.25 -0.56,-1.25 -1.25,-1.25zM15,11.75c-0.69,0 -1.25,0.56 -1.25,1.25s0.56,1.25 1.25,1.25 1.25,-0.56 1.25,-1.25 -0.56,-1.25 -1.25,-1.25zM12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,20c-4.41,0 -8,-3.59 -8,-8 0,-0.29 0.02,-0.58 0.05,-0.86 2.36,-1.05 4.23,-2.98 5.21,-5.37C11.07,8.33 14.05,10 17.42,10c0.78,0 1.53,-0.09 2.25,-0.26C19.88,10.47 20,11.22 20,12c0,4.41 -3.59,8 -8,8zM12,17c2.33,0 4.31,-1.46 5.11,-3.5H6.89C7.69,15.54 9.67,17 12,17z" />
 </vector>

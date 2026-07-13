@@ -21,6 +21,8 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.bottomNavigation);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
+            if (com.example.facerecognitionimages.utils.ClickUtils.isFastDoubleClick()) return false;
+            
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
             if (itemId == R.id.nav_dashboard) {

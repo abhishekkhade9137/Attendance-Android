@@ -2,14 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_dashboard"
-        android:icon="@drawable/ic_baseline_camera_24"
+        android:icon="@drawable/ic_nav_dashboard"
         android:title="Dashboard" />
     <item
         android:id="@+id/nav_members"
-        android:icon="@drawable/ic_baseline_image_24"
+        android:icon="@drawable/ic_nav_members"
         android:title="Members" />
     <item
         android:id="@+id/nav_logs"
-        android:icon="@android:drawable/ic_menu_agenda"
+        android:icon="@drawable/ic_nav_logs"
         android:title="Logs" />
 </menu>

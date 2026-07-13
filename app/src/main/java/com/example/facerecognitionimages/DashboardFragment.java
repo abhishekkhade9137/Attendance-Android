@@ -8,6 +8,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.net.Uri;
+import android.widget.Toast;
+import android.content.Context;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import android.app.Activity;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,13 +21,6 @@ import androidx.fragment.app.Fragment;
 
 import com.example.facerecognitionimages.db.AppDatabase;
 import com.example.facerecognitionimages.db.LogEntity;
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,9 +29,65 @@ import java.util.Locale;
 
 public class DashboardFragment extends Fragment {
 
-    private TextView countRegisteredTv, countTodayTv;
+    private TextView countRegisteredTv, countTodayTv, countInTv, countOutTv;
     private Button btnScanIn, btnScanOut;
-    private BarChart barChart;
+    
+    private final ActivityResultLauncher<Intent> exportLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri != null) {
+                        Toast.makeText(requireContext(), "Exporting...", Toast.LENGTH_SHORT).show();
+                        com.example.facerecognitionimages.utils.BackupUtils.exportBackup(requireContext(), uri, new com.example.facerecognitionimages.utils.BackupUtils.BackupCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Context ctx = getContext();
+                                if (ctx != null && getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> Toast.makeText(ctx, "Backup exported successfully!", Toast.LENGTH_LONG).show());
+                                }
+                            }
+                            @Override
+                            public void onError(String message) {
+                                Context ctx = getContext();
+                                if (ctx != null && getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> Toast.makeText(ctx, "Export failed: " + message, Toast.LENGTH_LONG).show());
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+    private final ActivityResultLauncher<Intent> importLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri != null) {
+                        Toast.makeText(requireContext(), "Importing...", Toast.LENGTH_SHORT).show();
+                        com.example.facerecognitionimages.utils.BackupUtils.importBackup(requireContext(), uri, new com.example.facerecognitionimages.utils.BackupUtils.BackupCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Context ctx = getContext();
+                                if (ctx != null && getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> {
+                                        Toast.makeText(ctx, "Backup imported successfully!", Toast.LENGTH_LONG).show();
+                                        updateStats(); // Refresh dashboard
+                                    });
+                                }
+                            }
+                            @Override
+                            public void onError(String message) {
+                                Context ctx = getContext();
+                                if (ctx != null && getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> Toast.makeText(ctx, "Import failed: " + message, Toast.LENGTH_LONG).show());
+                                }
+                            }
+                        });
+                    }
+                }
+            });
 
     @Nullable
     @Override
@@ -41,39 +96,44 @@ public class DashboardFragment extends Fragment {
         
         countRegisteredTv = view.findViewById(R.id.countRegistered);
         countTodayTv = view.findViewById(R.id.countToday);
+        countInTv = view.findViewById(R.id.countIn);
+        countOutTv = view.findViewById(R.id.countOut);
+        
         btnScanIn = view.findViewById(R.id.btnScanIn);
         btnScanOut = view.findViewById(R.id.btnScanOut);
-        barChart = view.findViewById(R.id.barChart);
         
         btnScanIn.setOnClickListener(v -> {
+            if (com.example.facerecognitionimages.utils.ClickUtils.isFastDoubleClick()) return;
             Intent intent = new Intent(requireContext(), RecognitionActivity.class);
             intent.putExtra("SCAN_MODE", "IN");
             startActivity(intent);
         });
 
         btnScanOut.setOnClickListener(v -> {
+            if (com.example.facerecognitionimages.utils.ClickUtils.isFastDoubleClick()) return;
             Intent intent = new Intent(requireContext(), RecognitionActivity.class);
             intent.putExtra("SCAN_MODE", "OUT");
             startActivity(intent);
         });
         
-        setupChart();
+        view.findViewById(R.id.btnBackup).setOnClickListener(v -> {
+            if (com.example.facerecognitionimages.utils.ClickUtils.isFastDoubleClick()) return;
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/zip");
+            intent.putExtra(Intent.EXTRA_TITLE, "facerecognition_backup.zip");
+            exportLauncher.launch(intent);
+        });
+        
+        view.findViewById(R.id.btnRestore).setOnClickListener(v -> {
+            if (com.example.facerecognitionimages.utils.ClickUtils.isFastDoubleClick()) return;
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/zip");
+            importLauncher.launch(intent);
+        });
         
         return view;
-    }
-
-    private void setupChart() {
-        barChart.getDescription().setEnabled(false);
-        barChart.setDrawGridBackground(false);
-        barChart.getAxisRight().setEnabled(false);
-        barChart.getAxisLeft().setGranularity(1f);
-        barChart.getAxisLeft().setAxisMinimum(0f);
-        
-        XAxis xAxis = barChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setDrawGridLines(false);
-        xAxis.setGranularity(1f);
-        xAxis.setValueFormatter(new IndexAxisValueFormatter(new String[]{"IN", "OUT"}));
     }
 
     @Override
@@ -83,11 +143,14 @@ public class DashboardFragment extends Fragment {
     }
 
     private void updateStats() {
+        Context context = getContext();
+        if (context == null) return;
+        
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            int registeredCount = AppDatabase.getDatabase(requireContext()).memberDao().getMemberCount();
+            int registeredCount = AppDatabase.getDatabase(context).memberDao().getUniqueMemberCount();
             
             String todayDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-            List<LogEntity> todayLogs = AppDatabase.getDatabase(requireContext()).logDao().getLogsByDate(todayDate);
+            List<LogEntity> todayLogs = AppDatabase.getDatabase(context).logDao().getLogsByDate(todayDate);
             
             int inCount = 0;
             int outCount = 0;
@@ -102,22 +165,11 @@ public class DashboardFragment extends Fragment {
                 int finalInCount = inCount;
                 int finalOutCount = outCount;
                 getActivity().runOnUiThread(() -> {
+                    if (getView() == null) return;
                     countRegisteredTv.setText(String.valueOf(registeredCount));
                     countTodayTv.setText(String.valueOf(todayCount));
-                    
-                    List<BarEntry> entries = new ArrayList<>();
-                    entries.add(new BarEntry(0f, finalInCount));
-                    entries.add(new BarEntry(1f, finalOutCount));
-                    
-                    BarDataSet dataSet = new BarDataSet(entries, "Today's Attendance");
-                    dataSet.setColor(Color.BLACK);
-                    dataSet.setValueTextSize(12f);
-                    
-                    BarData barData = new BarData(dataSet);
-                    barData.setBarWidth(0.5f);
-                    
-                    barChart.setData(barData);
-                    barChart.invalidate();
+                    countInTv.setText(String.valueOf(finalInCount));
+                    countOutTv.setText(String.valueOf(finalOutCount));
                 });
             }
         });

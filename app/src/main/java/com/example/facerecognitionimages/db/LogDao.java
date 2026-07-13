@@ -22,4 +22,7 @@ public interface LogDao {
     
     @Query("SELECT * FROM logs WHERE name = :name AND date = :date ORDER BY time ASC")
     List<LogEntity> getLogsForUserOnDate(String name, String date);
+    
+    @Query("DELETE FROM logs")
+    void deleteAllLogs();
 }

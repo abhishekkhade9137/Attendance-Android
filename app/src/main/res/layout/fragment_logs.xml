@@ -65,28 +65,93 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/logsTitle" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/logsRecyclerView"
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/rounded_search_bg"
+        app:iconifiedByDefault="false"
+        app:queryHint="Search logs..."
+        app:layout_constraintTop_toBottomOf="@id/tvCurrentDate" />
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:clipToPadding="false"
-        android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvCurrentDate" />
+        app:layout_constraintTop_toBottomOf="@id/searchView">
+        
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            
+            <com.facebook.shimmer.ShimmerFrameLayout
+                android:id="@+id/shimmerLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:padding="16dp"
+                app:shimmer_auto_start="true">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <include layout="@layout/shimmer_member_item" />
+                    <include layout="@layout/shimmer_member_item" />
+                    <include layout="@layout/shimmer_member_item" />
+                    <include layout="@layout/shimmer_member_item" />
+                    <include layout="@layout/shimmer_member_item" />
+                </LinearLayout>
+            </com.facebook.shimmer.ShimmerFrameLayout>
+        
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/logsRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:padding="16dp"
+                android:visibility="gone" />
+        </FrameLayout>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <TextView
+    <LinearLayout
         android:id="@+id/emptyState"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="No logs found"
-        android:textColor="@color/textColorSecondary"
-        android:textSize="16sp"
+        android:orientation="vertical"
+        android:gravity="center"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/logsTitle" />
+        app:layout_constraintTop_toBottomOf="@id/logsTitle">
+        
+        <ImageView
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:src="@drawable/ic_empty_logs_illustration"
+            android:layout_marginBottom="24dp" />
+            
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No logs found"
+            android:textColor="#333333"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+            
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logs will appear here once you scan faces"
+            android:textColor="#666666"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp" />
+    </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabManualEntry"

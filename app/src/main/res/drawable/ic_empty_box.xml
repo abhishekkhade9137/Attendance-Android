@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    <!-- Box Bottom -->
+    <path
+        android:fillColor="#E0E7FF"
+        android:pathData="M100,160 L40,120 L40,80 L100,120 L160,80 L160,120 Z" />
+    <!-- Box Top Left Flap -->
+    <path
+        android:fillColor="#C7D2FE"
+        android:pathData="M40,80 L100,120 L100,60 L40,20 Z" />
+    <!-- Box Top Right Flap -->
+    <path
+        android:fillColor="#A5B4FC"
+        android:pathData="M160,80 L100,120 L100,60 L160,20 Z" />
+    <!-- Shadows -->
+    <path
+        android:fillColor="#818CF8"
+        android:pathData="M100,160 L100,120 L160,80 L160,120 Z" />
+    <path
+        android:fillColor="#33000000"
+        android:pathData="M100,120 L40,80 L100,40 L160,80 Z" />
+    <!-- Stars/Sparkles -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M40,160 L45,150 L55,150 L48,145 L50,135 L40,140 L30,135 L32,145 L25,150 L35,150 Z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M150,50 L153,44 L160,44 L155,40 L157,34 L150,38 L143,34 L145,40 L140,44 L147,44 Z" />
+</vector>

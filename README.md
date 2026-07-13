@@ -1,4 +1,4 @@
-# Attendance-Android
+# Face Attendance
 
 A robust, offline-first Android application designed for seamless and automated attendance tracking using advanced Face Recognition technology. The app leverages the power of Google's ML Kit for rapid face detection and a local TensorFlow Lite (TFLite) MobileFaceNet/FaceNet model for generating accurate face embeddings.
 
@@ -11,8 +11,10 @@ Designed with privacy and speed in mind, all processing and data storage happens
 - **Real-time Live Recognition**: Utilize the device's camera to scan and identify individuals in real-time. The app uses an optimized processing queue to handle multiple faces smoothly without lagging the UI.
 - **Group Photo Recognition**: Upload or select a group photo from the gallery, and the app will detect and identify all registered individuals in the photo simultaneously, marking their attendance in bulk.
 - **Secure Member Registration**: Easily enroll new members by taking a photo. The app extracts the facial embedding and securely stores it alongside their details in the local database.
+- **Smart Learning System**: When you correct a misidentified face or tag someone in a group photo, the app captures that new facial template and stores up to 5 diverse representations of that person to continually improve accuracy.
 - **Offline Capable & Privacy-First**: 100% of the biometric processing and data storage is handled entirely on-device using a local SQLite database (via Room), ensuring maximum privacy and no dependency on cloud APIs.
-- **Comprehensive Dashboard & Logs**: Track presence history and view detailed attendance logs in real-time. The app also features data visualization charts to quickly understand attendance statistics.
+- **Comprehensive Dashboard & Logs**: Track presence history and view detailed attendance logs in real-time with a modern 4-grid statistics dashboard.
+- **CSV Export & Sharing**: Export your attendance logs directly to a CSV file and share it via email, WhatsApp, or any other app seamlessly.
 
 ---
 
@@ -64,8 +66,9 @@ The codebase is organized into several key components representing the main work
    - If the tracking ID hasn't been recognized recently, the face is queued for TFLite processing.
    - The TFLite model generates the live embedding and compares it against the database.
    - If a match is found (distance < threshold), a log entry is created in Room.
-3. **Review**:
+3. **Review & Export**:
    - Admin navigates to the Dashboard or Logs tab in `MainActivity` to view the generated attendance records.
+   - Admin can hit the Export button to generate and share a `.csv` file containing the attendance data.
 
 ---
 

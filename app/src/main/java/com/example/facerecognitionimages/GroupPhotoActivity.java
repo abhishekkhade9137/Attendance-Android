@@ -6,11 +6,17 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.media.MediaPlayer;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.content.Context;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -88,7 +94,10 @@ public class GroupPhotoActivity extends AppCompatActivity {
         if (uriStr != null) {
             imageUri = Uri.parse(uriStr);
         } else {
-            Toast.makeText(this, "No image provided", Toast.LENGTH_SHORT).show();
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                Toast.makeText(this, "No image provided", Toast.LENGTH_SHORT).show();
+            });
             finish();
             return;
         }
@@ -141,6 +150,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
             java.util.Collections.sort(uniqueMemberNames);
 
             runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
                 try {
                     currentBitmap = getBitmapFromUri(imageUri);
                     if (currentBitmap != null) {
@@ -205,10 +215,11 @@ public class GroupPhotoActivity extends AppCompatActivity {
                 }
                 
                 // We must store the original bitmap bounds, then map them later to screen
-                detectedBoxes.add(new BoundingBoxOverlay.Box(bounds, label, recognized));
+                detectedBoxes.add(new BoundingBoxOverlay.Box(bounds, label, recognized, emb));
             }
 
             runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
                 processingCard.setVisibility(View.GONE);
                 mapBoxesToScreenAndDraw();
                 
@@ -238,7 +249,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
             int top = (int) (r.top * scale + dy);
             int right = (int) (r.right * scale + dx);
             int bottom = (int) (r.bottom * scale + dy);
-            screenBoxes.add(new BoundingBoxOverlay.Box(new Rect(left, top, right, bottom), box.label, box.recognized));
+            screenBoxes.add(new BoundingBoxOverlay.Box(new Rect(left, top, right, bottom), box.label, box.recognized, box.embedding));
         }
         
         overlayView.setBoxes(screenBoxes);
@@ -254,26 +265,49 @@ public class GroupPhotoActivity extends AppCompatActivity {
     }
 
     private void showTaggingDialog(BoundingBoxOverlay.Box screenBox, int screenIndex) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Tag Person");
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, uniqueMemberNames);
+        AlertDialog.Builder optionsBuilder = new AlertDialog.Builder(this);
+        optionsBuilder.setTitle("Face Options");
+        String[] options = {"Change Person", "Remove / Ignore Face"};
         
-        builder.setAdapter(adapter, (dialog, which) -> {
-            String selectedName = uniqueMemberNames.get(which);
-            // Update the original list
+        optionsBuilder.setItems(options, (dialogInterface, i) -> {
             BoundingBoxOverlay.Box originalBox = detectedBoxes.get(screenIndex);
-            originalBox.label = selectedName;
-            originalBox.recognized = true;
-            
-            mapBoxesToScreenAndDraw();
-            
-            long recCount = detectedBoxes.stream().filter(b -> b.recognized).count();
-            statusText.setText("Detected " + detectedBoxes.size() + " faces. Recognized " + recCount + ". Tap red boxes to tag manually.");
+            if (i == 0) {
+                // Change Person
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Tag Person");
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, uniqueMemberNames);
+                builder.setAdapter(adapter, (dialog, which) -> {
+                    String selectedName = uniqueMemberNames.get(which);
+                    originalBox.label = selectedName;
+                    originalBox.recognized = true;
+                    
+                    // Learn from the mistake
+                    if (originalBox.embedding != null) {
+                        AppDatabase.databaseWriteExecutor.execute(() -> {
+                            com.example.facerecognitionimages.utils.SmartFaceManager.saveFaceSmartly(this, selectedName, originalBox.embedding);
+                        });
+                        Toast.makeText(this, "Learned face for " + selectedName, Toast.LENGTH_SHORT).show();
+                    }
+                    
+                    mapBoxesToScreenAndDraw();
+                    updateStatusText();
+                });
+                builder.setNegativeButton("Cancel", null);
+                builder.show();
+            } else if (i == 1) {
+                // Remove / Ignore Face
+                originalBox.label = "";
+                originalBox.recognized = false;
+                mapBoxesToScreenAndDraw();
+                updateStatusText();
+            }
         });
+        optionsBuilder.show();
+    }
 
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+    private void updateStatusText() {
+        long recCount = detectedBoxes.stream().filter(b -> b.recognized).count();
+        statusText.setText("Detected " + detectedBoxes.size() + " faces. Recognized " + recCount + ". Tap red boxes to tag manually.");
     }
 
     private void submitAttendance() {
@@ -310,7 +344,27 @@ public class GroupPhotoActivity extends AppCompatActivity {
             }
             
             runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
                 processingCard.setVisibility(View.GONE);
+                
+                // Haptic Feedback
+                Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                if (vibrator != null && vibrator.hasVibrator()) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
+                    } else {
+                        vibrator.vibrate(50);
+                    }
+                }
+                
+                // Audio Cue
+                try {
+                    Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                    MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
+                    mp.start();
+                    mp.setOnCompletionListener(MediaPlayer::release);
+                } catch (Exception e) {}
+
                 Toast.makeText(this, "Marked " + toMark.size() + " people as " + scanMode + "!", Toast.LENGTH_LONG).show();
                 finish();
             });

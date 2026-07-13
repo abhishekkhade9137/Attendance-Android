@@ -22,13 +22,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
+import com.example.facerecognitionimages.utils.UIHelper;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
@@ -187,6 +189,7 @@ public class RegisterActivity extends AppCompatActivity {
                     }
                     isProcessing = true;
                     runOnUiThread(() -> {
+                        if (isFinishing() || isDestroyed()) return;
                         Bitmap bitmap = previewView.getBitmap();
                         if (bitmap != null) {
                             detectAndRegister(bitmap);
@@ -205,19 +208,19 @@ public class RegisterActivity extends AppCompatActivity {
                         } else if (currentCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA && cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) {
                             currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
                         } else {
-                            runOnUiThread(() -> Toast.makeText(this, "No camera found on this device.", Toast.LENGTH_LONG).show());
+                            runOnUiThread(() -> UIHelper.showErrorSnackbar(findViewById(android.R.id.content), "No camera found on this device."));
                             return;
                         }
                     }
                     cameraProvider.bindToLifecycle(this, currentCameraSelector, preview, imageAnalysis);
                 } catch (Exception e) {
                     Log.e("RegisterActivity", "Camera binding failed", e);
-                    runOnUiThread(() -> Toast.makeText(this, "Camera error: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                    runOnUiThread(() -> UIHelper.showErrorSnackbar(findViewById(android.R.id.content), "Camera error: " + e.getMessage()));
                 }
 
             } catch (Exception e) {
                 Log.e("RegisterActivity", "Camera start failed", e);
-                runOnUiThread(() -> Toast.makeText(this, "Camera initialization failed.", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> UIHelper.showErrorSnackbar(findViewById(android.R.id.content), "Camera initialization failed."));
             }
         }, ContextCompat.getMainExecutor(this));
     }
@@ -253,8 +256,9 @@ public class RegisterActivity extends AppCompatActivity {
 
                         if (Math.abs(eulerY) > 10 || Math.abs(eulerZ) > 10) {
                             runOnUiThread(() -> {
+                                if (isFinishing() || isDestroyed()) return;
                                 if (System.currentTimeMillis() - lastToastTime > 2000) {
-                                    Toast.makeText(RegisterActivity.this, "Please look straight at the camera", Toast.LENGTH_SHORT).show();
+                                    UIHelper.showErrorSnackbar(findViewById(android.R.id.content), "Please look straight at the camera");
                                     lastToastTime = System.currentTimeMillis();
                                 }
                             });
@@ -272,6 +276,7 @@ public class RegisterActivity extends AppCompatActivity {
                         recognitionExecutor.execute(() -> {
                             float[] embedding = getEmbedding(bitmap, bounds);
                             runOnUiThread(() -> {
+                                if (isFinishing() || isDestroyed()) return;
                                 processingCard.setVisibility(View.GONE);
                                 if (embedding != null) {
                                     showRegistrationDialog(bitmap, bounds, embedding);
@@ -300,7 +305,7 @@ public class RegisterActivity extends AppCompatActivity {
         final Bitmap finalCropped = cropped;
 
         if (existingMatch != null) {
-            AlertDialog.Builder verifyBuilder = new AlertDialog.Builder(this);
+            MaterialAlertDialogBuilder verifyBuilder = new MaterialAlertDialogBuilder(this);
             verifyBuilder.setTitle("Verify Person");
             verifyBuilder.setMessage("This face looks like " + existingMatch + ". Is this the same person?");
             if (finalCropped != null) {
@@ -324,7 +329,7 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void showNewPersonDialog(Bitmap finalCropped, float[] embedding) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.register_face_dialogue, null);
         builder.setView(dialogView);
@@ -338,16 +343,17 @@ public class RegisterActivity extends AppCompatActivity {
             dlgImage.setImageBitmap(finalCropped);
         }
 
-        AlertDialog alertDialog = builder.create();
+        androidx.appcompat.app.AlertDialog alertDialog = builder.create();
 
         dlgBtn.setOnClickListener(v -> {
+            if (com.example.facerecognitionimages.utils.ClickUtils.isFastDoubleClick()) return;
             String name = dlgInput.getText().toString().trim();
             if (!name.isEmpty()) {
                 saveFaceData(name, embedding, finalCropped);
                 alertDialog.dismiss();
                 isDialogActive = false;
             } else {
-                Toast.makeText(this, "Enter name", Toast.LENGTH_SHORT).show();
+                UIHelper.showErrorSnackbar(findViewById(android.R.id.content), "Enter name");
             }
         });
 
@@ -363,12 +369,8 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void saveFaceData(String name, float[] embedding, Bitmap finalCropped) {
-        MemberEntity member = new MemberEntity();
-        member.name = name;
-        member.embedding = embedding;
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            AppDatabase.getDatabase(RegisterActivity.this).memberDao().insertMember(member);
-            AppDatabase.getDatabase(RegisterActivity.this).memberDao().keepRecentFaces(name, 5);
+            com.example.facerecognitionimages.utils.SmartFaceManager.saveFaceSmartly(RegisterActivity.this, name, embedding);
             loadEmbeddings();
         });
 
@@ -393,7 +395,7 @@ public class RegisterActivity extends AppCompatActivity {
             }
         }
 
-        Toast.makeText(this, "Registered photo for: " + name, Toast.LENGTH_SHORT).show();
+        UIHelper.showSuccessSnackbar(findViewById(android.R.id.content), "Registered photo for: " + name);
     }
 
     private float[] getEmbedding(Bitmap bitmap, Rect bounds) {
@@ -444,7 +446,7 @@ public class RegisterActivity extends AppCompatActivity {
         detector.process(image)
                 .addOnSuccessListener(faces -> {
                     if (faces.isEmpty()) {
-                        Toast.makeText(this, "No faces detected in image", Toast.LENGTH_SHORT).show();
+                        UIHelper.showErrorSnackbar(findViewById(android.R.id.content), "No faces detected in image");
                         return;
                     }
 
@@ -460,10 +462,10 @@ public class RegisterActivity extends AppCompatActivity {
                         canvas.drawRect(face.getBoundingBox(), paint);
                     }
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
                     View dialogView = getLayoutInflater().inflate(R.layout.dialog_choose_face, null);
                     builder.setView(dialogView);
-                    AlertDialog alertDialog = builder.create();
+                    androidx.appcompat.app.AlertDialog alertDialog = builder.create();
 
                     ImageView ivGalleryFaces = dialogView.findViewById(R.id.ivGalleryFaces);
                     ivGalleryFaces.setImageBitmap(canvasBitmap);
@@ -490,12 +492,13 @@ public class RegisterActivity extends AppCompatActivity {
                                     recognitionExecutor.execute(() -> {
                                         float[] embedding = getEmbedding(bitmap, bounds);
                                         runOnUiThread(() -> {
+                                            if (isFinishing() || isDestroyed()) return;
                                             processingCard.setVisibility(View.GONE);
                                             if (embedding != null) {
                                                 isDialogActive = true;
                                                 showRegistrationDialog(bitmap, bounds, embedding);
                                             } else {
-                                                Toast.makeText(this, "Failed to extract face", Toast.LENGTH_SHORT).show();
+                                                UIHelper.showErrorSnackbar(findViewById(android.R.id.content), "Failed to extract face");
                                             }
                                         });
                                     });
@@ -509,7 +512,7 @@ public class RegisterActivity extends AppCompatActivity {
                     dialogView.findViewById(R.id.btnCancelGallery).setOnClickListener(v -> alertDialog.dismiss());
                     alertDialog.show();
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, "Face detection failed", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> UIHelper.showErrorSnackbar(findViewById(android.R.id.content), "Face detection failed"));
     }
 
     private Bitmap getBitmapFromUri(Uri uri) throws IOException {
@@ -598,7 +601,7 @@ public class RegisterActivity extends AppCompatActivity {
         if (requestCode == PERMISSION_CODE && allPermissionsGranted()) {
             startCamera();
         } else {
-            Toast.makeText(this, "Permission required", Toast.LENGTH_SHORT).show();
+            UIHelper.showErrorSnackbar(findViewById(android.R.id.content), "Permission required");
             finish();
         }
     }
