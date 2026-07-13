@@ -27,50 +27,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/dashboardTitle">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBackup"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Export"
-            android:textColor="@color/black"
-            android:textSize="12sp"
-            app:icon="@android:drawable/ic_menu_upload"
-            app:iconTint="@color/black"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRestore"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Import"
-            android:textColor="@color/black"
-            android:textSize="12sp"
-            app:icon="@android:drawable/ic_menu_revert"
-            app:iconTint="@color/black"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp" />
-
-        <com.google.android.material.button.MaterialButton
+        <ImageView
             android:id="@+id/btnSettings"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Settings"
-            android:textColor="@color/black"
-            android:textSize="12sp"
-            app:icon="@android:drawable/ic_menu_preferences"
-            app:iconTint="@color/black"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp" />
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_preferences"
+            app:tint="@color/black"
+            android:contentDescription="Settings" />
     </LinearLayout>
 
     <GridLayout
