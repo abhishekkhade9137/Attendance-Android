@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
@@ -47,11 +48,13 @@ public class LogAdapter extends RecyclerView.Adapter<LogAdapter.LogViewHolder> {
                 holder.logType.setText(parts[3]);
                 
                 if (parts[3].equals("IN")) {
-                    holder.logType.setTextColor(Color.parseColor("#000000")); // Black for IN
-                    holder.statusIndicator.setBackgroundColor(Color.parseColor("#000000"));
+                    int colorIn = ContextCompat.getColor(holder.itemView.getContext(), R.color.black);
+                    holder.logType.setTextColor(colorIn);
+                    holder.statusIndicator.setBackgroundColor(colorIn);
                 } else {
-                    holder.logType.setTextColor(Color.parseColor("#666666")); // Gray for OUT
-                    holder.statusIndicator.setBackgroundColor(Color.parseColor("#666666"));
+                    int colorOut = ContextCompat.getColor(holder.itemView.getContext(), R.color.textColorSecondary);
+                    holder.logType.setTextColor(colorOut);
+                    holder.statusIndicator.setBackgroundColor(colorOut);
                 }
                 if (parts.length >= 5 && deleteListener != null) {
                     try {
@@ -75,7 +78,7 @@ public class LogAdapter extends RecyclerView.Adapter<LogAdapter.LogViewHolder> {
                 holder.logName.setText(logData);
             }
             holder.logType.setText("LOG");
-            holder.statusIndicator.setBackgroundColor(Color.BLACK);
+            holder.statusIndicator.setBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.black));
         }
     }
 
