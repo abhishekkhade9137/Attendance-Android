@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Invert black/white for text and icons using these hardcoded values -->
+    <color name="black">#FFFFFFFF</color>
+    <color name="white">#FF121212</color>
+    
+    <color name="colorPrimary">#90CAF9</color>
+    <color name="colorPrimaryDark">#1976D2</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimaryLight">#0D47A1</color>
+    
+    <!-- True dark backgrounds -->
+    <color name="windowBackground">#FF000000</color>
+    <color name="surfaceColor">#FF121212</color>
+    <color name="surfaceVariant">#FF1E1E1E</color>
+    
+    <!-- Text colors -->
+    <color name="textColorPrimary">#FFFFFFFF</color>
+    <color name="textColorSecondary">#FFB3B3B3</color>
+    <color name="textColorTertiary">#FF808080</color>
+    
+    <color name="successColor">#81C784</color>
+    <color name="errorColor">#E57373</color>
+    <color name="warningColor">#FFD54F</color>
+    
+    <color name="overlayDark">#CC000000</color>
+    <color name="overlayLight">#33FFFFFF</color>
+    
+    <color name="borderColor">#FF333333</color>
+</resources>
