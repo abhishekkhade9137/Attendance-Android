@@ -99,7 +99,15 @@ public class GroupPhotoActivity extends AppCompatActivity {
         detector = FaceDetection.getClient(options);
 
         try {
-            model = Facenet.newInstance(this);
+            try {
+                org.tensorflow.lite.support.model.Model.Options tfOptions = new org.tensorflow.lite.support.model.Model.Options.Builder()
+                        .setDevice(org.tensorflow.lite.support.model.Model.Device.GPU)
+                        .build();
+                model = Facenet.newInstance(this, tfOptions);
+            } catch (Exception e) {
+                Log.e("GroupPhoto", "GPU acceleration failed, falling back to CPU", e);
+                model = Facenet.newInstance(this);
+            }
         } catch (IOException e) {
             Log.e("GroupPhoto", "Model error", e);
         }
@@ -364,7 +372,28 @@ public class GroupPhotoActivity extends AppCompatActivity {
     private Bitmap getBitmapFromUri(Uri uri) {
         try {
             InputStream is = getContentResolver().openInputStream(uri);
-            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(is, null, options);
+            if (is != null) is.close();
+
+            int reqWidth = 1080;
+            int reqHeight = 1920;
+            int inSampleSize = 1;
+
+            if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
+                final int halfHeight = options.outHeight / 2;
+                final int halfWidth = options.outWidth / 2;
+                while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                    inSampleSize *= 2;
+                }
+            }
+
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = inSampleSize;
+
+            is = getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
             if (is != null) is.close();
 
             is = getContentResolver().openInputStream(uri);

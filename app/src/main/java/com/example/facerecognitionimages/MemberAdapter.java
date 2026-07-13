@@ -21,13 +21,19 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MemberView
     public interface OnMemberDeleteListener {
         void onDelete(String name);
     }
+    
+    public interface OnMemberClickListener {
+        void onClick(String name);
+    }
 
     private List<String> memberList;
     private OnMemberDeleteListener deleteListener;
+    private OnMemberClickListener clickListener;
 
-    public MemberAdapter(List<String> memberList, OnMemberDeleteListener deleteListener) {
+    public MemberAdapter(List<String> memberList, OnMemberDeleteListener deleteListener, OnMemberClickListener clickListener) {
         this.memberList = memberList;
         this.deleteListener = deleteListener;
+        this.clickListener = clickListener;
     }
 
     @NonNull
@@ -63,6 +69,12 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MemberView
         holder.btnDeleteMember.setOnClickListener(v -> {
             if (deleteListener != null) {
                 deleteListener.onDelete(name);
+            }
+        });
+        
+        holder.itemView.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onClick(name);
             }
         });
     }

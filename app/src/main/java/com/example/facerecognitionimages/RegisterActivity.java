@@ -78,9 +78,9 @@ public class RegisterActivity extends AppCompatActivity {
     private FaceDetector detector;
     private Facenet model;
     public static java.util.List<RecognitionActivity.PersonEmbedding> faceEmbeddingsList = new java.util.ArrayList<>();
-    private boolean isProcessing = false;
-    private boolean isDialogActive = false;
-    private boolean isReadyToScan = false;
+    private volatile boolean isProcessing = false;
+    private volatile boolean isDialogActive = false;
+    private volatile boolean isReadyToScan = false;
     private android.widget.Button btnReady;
     
     private Bitmap reusableBitmap = null;
@@ -137,7 +137,15 @@ public class RegisterActivity extends AppCompatActivity {
         detector = FaceDetection.getClient(options);
 
         try {
-            model = Facenet.newInstance(this);
+            try {
+                org.tensorflow.lite.support.model.Model.Options tfOptions = new org.tensorflow.lite.support.model.Model.Options.Builder()
+                        .setDevice(org.tensorflow.lite.support.model.Model.Device.GPU)
+                        .build();
+                model = Facenet.newInstance(this, tfOptions);
+            } catch (Exception e) {
+                Log.e("RegisterActivity", "GPU acceleration failed, falling back to CPU", e);
+                model = Facenet.newInstance(this);
+            }
         } catch (IOException e) {
             Log.e("RegisterActivity", "Model error", e);
         }
@@ -238,13 +246,26 @@ public class RegisterActivity extends AppCompatActivity {
                     }
                     overlayView.setImageBitmap(reusableBitmap);
 
-                    if (!isDialogActive && !faces.isEmpty()) {
+                    if (!isDialogActive && isReadyToScan && !faces.isEmpty()) {
+                        Face face = faces.get(0);
+                        float eulerY = face.getHeadEulerAngleY();
+                        float eulerZ = face.getHeadEulerAngleZ();
+
+                        if (Math.abs(eulerY) > 10 || Math.abs(eulerZ) > 10) {
+                            runOnUiThread(() -> {
+                                if (System.currentTimeMillis() - lastToastTime > 2000) {
+                                    Toast.makeText(RegisterActivity.this, "Please look straight at the camera", Toast.LENGTH_SHORT).show();
+                                    lastToastTime = System.currentTimeMillis();
+                                }
+                            });
+                            return;
+                        }
+
                         isDialogActive = true;
                         isReadyToScan = false;
                         btnReady.setEnabled(true);
                         btnReady.setText("Ready");
                         
-                        Face face = faces.get(0);
                         Rect bounds = face.getBoundingBox();
                         
                         processingCard.setVisibility(View.VISIBLE);
@@ -352,12 +373,22 @@ public class RegisterActivity extends AppCompatActivity {
         });
 
         if (finalCropped != null) {
-            java.io.File imgFile = new java.io.File(getFilesDir(), name + "_face.png");
-            if (!imgFile.exists()) {
-                try (java.io.FileOutputStream out = new java.io.FileOutputStream(imgFile)) {
-                    finalCropped.compress(Bitmap.CompressFormat.PNG, 100, out);
-                } catch (java.io.IOException e) {
-                    e.printStackTrace();
+            java.io.File dir = getFilesDir();
+            String timeStamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(new java.util.Date());
+            java.io.File imgFile = new java.io.File(dir, name + "_" + timeStamp + "_face.png");
+            
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(imgFile)) {
+                finalCropped.compress(Bitmap.CompressFormat.PNG, 100, out);
+            } catch (java.io.IOException e) {
+                e.printStackTrace();
+            }
+            
+            // Clean up old photos (keep 5)
+            java.io.File[] files = dir.listFiles((d, f) -> f.startsWith(name + "_") && f.endsWith("_face.png"));
+            if (files != null && files.length > 5) {
+                java.util.Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
+                for (int i = 5; i < files.length; i++) {
+                    files[i].delete();
                 }
             }
         }
@@ -482,8 +513,28 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private Bitmap getBitmapFromUri(Uri uri) throws IOException {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        
         ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
-        Bitmap bitmap = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor());
+        BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor(), null, options);
+        
+        int reqWidth = 1080;
+        int reqHeight = 1920;
+        int inSampleSize = 1;
+
+        if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
+            final int halfHeight = options.outHeight / 2;
+            final int halfWidth = options.outWidth / 2;
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        options.inJustDecodeBounds = false;
+        options.inSampleSize = inSampleSize;
+        
+        Bitmap bitmap = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor(), null, options);
         pfd.close();
 
         try (java.io.InputStream input = getContentResolver().openInputStream(uri)) {

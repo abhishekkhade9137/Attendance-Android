@@ -36,7 +36,7 @@ public class MembersFragment extends Fragment {
         emptyState = view.findViewById(R.id.emptyState);
         
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new MemberAdapter(memberList, this::deleteMember);
+        adapter = new MemberAdapter(memberList, this::deleteMember, this::viewMemberPhotos);
         recyclerView.setAdapter(adapter);
         
         view.findViewById(R.id.btnAddMember).setOnClickListener(v -> {
@@ -95,5 +95,48 @@ public class MembersFragment extends Fragment {
         });
     }
 
+    private void viewMemberPhotos(String name) {
+        if (getActivity() == null) return;
+        
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(getActivity());
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_member_photos, null);
+        builder.setView(dialogView);
+        
+        TextView title = dialogView.findViewById(R.id.dialogTitle);
+        title.setText("Photos for " + name);
+        
+        android.widget.LinearLayout photosContainer = dialogView.findViewById(R.id.photosContainer);
+        
+        File dir = requireContext().getFilesDir();
+        File[] files = dir.listFiles((d, f) -> f.startsWith(name + "_") && f.endsWith("_face.png"));
+        
+        if (files == null || files.length == 0) {
+            File legacy = new File(dir, name + "_face.png");
+            if (legacy.exists()) {
+                files = new File[]{legacy};
+            }
+        }
+        
+        if (files != null) {
+            java.util.Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
+            
+            for (File file : files) {
+                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(file.getAbsolutePath());
+                if (bitmap != null) {
+                    android.widget.ImageView iv = new android.widget.ImageView(getActivity());
+                    android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(300, 300);
+                    params.setMargins(0, 0, 16, 0);
+                    iv.setLayoutParams(params);
+                    iv.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+                    iv.setImageBitmap(bitmap);
+                    photosContainer.addView(iv);
+                }
+            }
+        }
+        
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
 
 }

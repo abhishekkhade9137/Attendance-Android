@@ -3,25 +3,25 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     
-    <color name="colorPrimary">#000000</color>
-    <color name="colorPrimaryDark">#000000</color>
-    <color name="colorAccent">#000000</color>
-    <color name="colorPrimaryLight">#FFFFFF</color>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimaryLight">#C5CAE9</color>
     
-    <color name="windowBackground">#FFFFFF</color>
+    <color name="windowBackground">#F5F7FA</color>
     <color name="surfaceColor">#FFFFFF</color>
-    <color name="surfaceVariant">#FFFFFF</color>
+    <color name="surfaceVariant">#E4E7EB</color>
     
-    <color name="textColorPrimary">#000000</color>
-    <color name="textColorSecondary">#000000</color>
-    <color name="textColorTertiary">#000000</color>
+    <color name="textColorPrimary">#212121</color>
+    <color name="textColorSecondary">#757575</color>
+    <color name="textColorTertiary">#BDBDBD</color>
     
-    <color name="successColor">#000000</color>
-    <color name="errorColor">#000000</color>
-    <color name="warningColor">#000000</color>
+    <color name="successColor">#4CAF50</color>
+    <color name="errorColor">#F44336</color>
+    <color name="warningColor">#FFC107</color>
     
     <color name="overlayDark">#80000000</color>
     <color name="overlayLight">#CCFFFFFF</color>
     
-    <color name="borderColor">#000000</color>
+    <color name="borderColor">#E0E0E0</color>
 </resources>
