@@ -56,6 +56,21 @@
             android:minWidth="0dp"
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSettings"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textColor="@color/black"
+            android:textSize="12sp"
+            app:icon="@android:drawable/ic_menu_preferences"
+            app:iconTint="@color/black"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp" />
     </LinearLayout>
 
     <GridLayout

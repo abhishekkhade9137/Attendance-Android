@@ -132,6 +132,11 @@ public class DashboardFragment extends Fragment {
             intent.setType("application/zip");
             importLauncher.launch(intent);
         });
+
+        view.findViewById(R.id.btnSettings).setOnClickListener(v -> {
+            if (com.example.facerecognitionimages.utils.ClickUtils.isFastDoubleClick()) return;
+            startActivity(new Intent(requireContext(), SettingsActivity.class));
+        });
         
         return view;
     }

@@ -470,7 +470,7 @@ public class RecognitionActivity extends AppCompatActivity {
 
     private String findMatch(float[] embedding) {
         String name = "Unknown";
-        float minDistance = 1.0f; // FaceNet threshold usually around 1.0 for L2
+        float minDistance = 0.75f; // Stricter threshold for siblings (was 1.0f)
         for (PersonEmbedding entry : faceEmbeddingsList) {
             float dist = 0;
             float[] stored = entry.embedding;
@@ -496,8 +496,12 @@ public class RecognitionActivity extends AppCompatActivity {
             String type = currentAttendanceType;
             long currentTime = System.currentTimeMillis();
             
-            // Throttle to 60 seconds (1 minute) per person to prevent duplicate logs
-            if (lastMarkedTime.containsKey(name) && (currentTime - lastMarkedTime.get(name) < 60000)) {
+            // Throttle based on SharedPreferences cooldown (in seconds)
+            android.content.SharedPreferences prefs = getSharedPreferences(SettingsActivity.PREF_NAME, Context.MODE_PRIVATE);
+            int cooldownSecs = prefs.getInt(SettingsActivity.KEY_COOLDOWN, 3);
+            long cooldownMs = cooldownSecs * 1000L;
+            
+            if (lastMarkedTime.containsKey(name) && (currentTime - lastMarkedTime.get(name) < cooldownMs)) {
                 return;
             }
             
@@ -515,23 +519,26 @@ public class RecognitionActivity extends AppCompatActivity {
             AppDatabase.databaseWriteExecutor.execute(() -> {
                 AppDatabase.getDatabase(this).logDao().insertLog(log);
                 runOnUiThread(() -> {
-                    // Haptic Feedback
-                    Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    if (vibrator != null && vibrator.hasVibrator()) {
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                            vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
-                        } else {
-                            vibrator.vibrate(50); // Fallback for older devices
+                    boolean hapticsEnabled = prefs.getBoolean(SettingsActivity.KEY_HAPTICS, true);
+                    if (hapticsEnabled) {
+                        // Haptic Feedback
+                        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                        if (vibrator != null && vibrator.hasVibrator()) {
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                                vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
+                            } else {
+                                vibrator.vibrate(50); // Fallback for older devices
+                            }
                         }
+                        
+                        // Audio Cue
+                        try {
+                            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                            MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
+                            mp.start();
+                            mp.setOnCompletionListener(MediaPlayer::release);
+                        } catch (Exception e) {}
                     }
-                    
-                    // Audio Cue
-                    try {
-                        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
-                        mp.start();
-                        mp.setOnCompletionListener(MediaPlayer::release);
-                    } catch (Exception e) {}
                     
                     // Snackbar Notification
                     UIHelper.showSuccessSnackbar(findViewById(android.R.id.content), "Marked " + type + " for " + name);

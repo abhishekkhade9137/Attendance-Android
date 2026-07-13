@@ -208,7 +208,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
                             bestName = m.name;
                         }
                     }
-                    if (bestScore > 0.6f) { // FaceNet threshold
+                    if (bestScore > 0.75f) { // Stricter threshold for siblings (was 0.6f)
                         label = bestName;
                         recognized = true;
                     }
@@ -347,23 +347,28 @@ public class GroupPhotoActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) return;
                 processingCard.setVisibility(View.GONE);
                 
-                // Haptic Feedback
-                Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                if (vibrator != null && vibrator.hasVibrator()) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
-                    } else {
-                        vibrator.vibrate(50);
-                    }
-                }
+                android.content.SharedPreferences prefs = getSharedPreferences(SettingsActivity.PREF_NAME, Context.MODE_PRIVATE);
+                boolean hapticsEnabled = prefs.getBoolean(SettingsActivity.KEY_HAPTICS, true);
                 
-                // Audio Cue
-                try {
-                    Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                    MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
-                    mp.start();
-                    mp.setOnCompletionListener(MediaPlayer::release);
-                } catch (Exception e) {}
+                if (hapticsEnabled) {
+                    // Haptic Feedback
+                    Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                    if (vibrator != null && vibrator.hasVibrator()) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                            vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
+                        } else {
+                            vibrator.vibrate(50);
+                        }
+                    }
+                    
+                    // Audio Cue
+                    try {
+                        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
+                        mp.start();
+                        mp.setOnCompletionListener(MediaPlayer::release);
+                    } catch (Exception e) {}
+                }
 
                 Toast.makeText(this, "Marked " + toMark.size() + " people as " + scanMode + "!", Toast.LENGTH_LONG).show();
                 finish();

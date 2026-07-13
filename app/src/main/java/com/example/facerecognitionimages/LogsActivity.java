@@ -36,7 +36,7 @@ public class LogsActivity extends AppCompatActivity {
         
         loadLogs();
         
-        adapter = new LogAdapter(logList);
+        adapter = new LogAdapter(logList, null);
         recyclerView.setAdapter(adapter);
     }
 
