@@ -13,21 +13,34 @@
         android:layout_marginTop="48dp"
         android:text="Attendance Logs"
         android:textColor="@color/black"
-        android:textSize="24sp"
+        android:textSize="32sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/rounded_search_bg"
+        app:iconifiedByDefault="false"
+        app:queryHint="Search logs..."
+        app:layout_constraintTop_toBottomOf="@id/logsTitle" />
         
     <TextView
         android:id="@+id/tvCurrentDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="24dp"
         android:text="All Time"
         android:textColor="@color/textColorSecondary"
         android:textSize="16sp"
-        app:layout_constraintStart_toStartOf="@id/logsTitle"
-        app:layout_constraintTop_toBottomOf="@id/logsTitle" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/searchView" />
 
     <ImageView
         android:id="@+id/btnFilterDate"
@@ -65,25 +78,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/logsTitle" />
 
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/searchView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/rounded_search_bg"
-        app:iconifiedByDefault="false"
-        app:queryHint="Search logs..."
-        app:layout_constraintTop_toBottomOf="@id/tvCurrentDate" />
-
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchView">
+        app:layout_constraintTop_toBottomOf="@id/tvCurrentDate">
         
         <FrameLayout
             android:layout_width="match_parent"
