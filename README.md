@@ -1,43 +1,93 @@
 # Attendance-Android
 
-A robust, offline-first Android application for automated attendance tracking using Face Recognition. The app leverages Google ML Kit for fast face detection and a TensorFlow Lite model for accurate face embeddings and recognition.
+A robust, offline-first Android application designed for seamless and automated attendance tracking using advanced Face Recognition technology. The app leverages the power of Google's ML Kit for rapid face detection and a local TensorFlow Lite (TFLite) MobileFaceNet/FaceNet model for generating accurate face embeddings.
 
-## Features
+Designed with privacy and speed in mind, all processing and data storage happens locally on the device, meaning the app is fully functional without requiring an internet connection.
 
-- **Real-time Face Recognition**: Mark attendance quickly using the live device camera.
-- **Group Photo Recognition**: Process group photos to identify and mark attendance for multiple individuals at once.
-- **Member Management**: Register new members with their face data securely.
-- **Offline Capable**: All data is stored locally using Room Database, meaning the app works entirely offline without requiring a constant internet connection.
-- **Attendance Logs & Dashboard**: View detailed attendance logs, track member presence, and visualize statistics.
-- **Secure Storage**: Sensitive data and preferences are secured using AndroidX Security Crypto.
+---
 
-## Tech Stack & Architecture
+## 🌟 Core Features
 
-- **Language**: Java
-- **UI Architecture**: Standard Android Activities and Fragments.
-- **Face Detection**: [Google ML Kit Face Detection](https://developers.google.com/ml-kit/vision/face-detection)
-- **Face Recognition**: [TensorFlow Lite](https://www.tensorflow.org/lite) (MobileFaceNet / FaceNet).
-- **Camera**: [AndroidX CameraX](https://developer.android.com/training/camerax) for a responsive, lifecycle-aware camera implementation.
-- **Local Database**: [Room Persistence Library](https://developer.android.com/training/data-storage/room)
-- **Data Visualization**: [MPAndroidChart](https://github.com/PhilJay/MPAndroidChart) for interactive dashboard charts.
+- **Real-time Live Recognition**: Utilize the device's camera to scan and identify individuals in real-time. The app uses an optimized processing queue to handle multiple faces smoothly without lagging the UI.
+- **Group Photo Recognition**: Upload or select a group photo from the gallery, and the app will detect and identify all registered individuals in the photo simultaneously, marking their attendance in bulk.
+- **Secure Member Registration**: Easily enroll new members by taking a photo. The app extracts the facial embedding and securely stores it alongside their details in the local database.
+- **Offline Capable & Privacy-First**: 100% of the biometric processing and data storage is handled entirely on-device using a local SQLite database (via Room), ensuring maximum privacy and no dependency on cloud APIs.
+- **Comprehensive Dashboard & Logs**: Track presence history and view detailed attendance logs in real-time. The app also features data visualization charts to quickly understand attendance statistics.
 
-## Project Structure
+---
 
-- **`LoginActivity` & `MainActivity`**: Handles user authentication and serves as the main hub with navigation to the Dashboard, Members, and Logs.
-- **`RecognitionActivity`**: The core camera view for real-time face scanning and attendance logging.
-- **`RegisterActivity`**: Handles capturing photos and extracting face embeddings for new members.
-- **`GroupPhotoActivity`**: Interface for selecting and processing group images for batch attendance.
-- **`db/`**: Contains Room Database Entities, DAOs, and the Database instance for managing `Members` and `Attendance Logs`.
+## 🏗️ Technical Architecture
 
-## Setup Instructions
+### 1. Artificial Intelligence & Machine Learning (AI/ML)
+- **Face Detection**: Uses **[Google ML Kit Vision](https://developers.google.com/ml-kit/vision/face-detection)** to detect face boundaries and tracking IDs in the camera feed.
+- **Face Embedding (Recognition)**: A **TensorFlow Lite (`facenet.tflite`)** model is used to convert the cropped face bitmaps into a mathematical 192-dimensional vector (embedding). 
+- **Matching Algorithm**: The app uses similarity distance metrics (Cosine Similarity / L2 Distance) to compare the live embedding against all registered embeddings stored in memory to find the closest match.
 
-1. Clone the repository to your local machine.
+### 2. Camera & Image Processing
+- **CameraX API**: Employs **[AndroidX CameraX](https://developer.android.com/training/camerax)** for a lifecycle-aware, responsive, and robust camera preview and ImageAnalysis pipeline.
+- **Multi-threaded Pipeline**: To maintain a high frame rate, the heavy ML operations (TFLite inference) are decoupled from the camera frame analysis using an `ExecutorService` and a `ConcurrentLinkedQueue`.
+
+### 3. Local Data & Storage
+- **Room Persistence Library**: Built on top of SQLite, **[AndroidX Room](https://developer.android.com/training/data-storage/room)** manages the `Member` and `AttendanceLog` tables, ensuring thread-safe read/write operations.
+- **Security Crypto**: Sensitive shared preferences and data are securely encrypted using **[AndroidX Security Crypto](https://developer.android.com/topic/security/data)**.
+
+---
+
+## 🗂️ Project Structure
+
+The codebase is organized into several key components representing the main workflows:
+
+| Component | Description |
+|-----------|-------------|
+| **`MainActivity`** | The central hub utilizing a `BottomNavigationView` to switch between the Dashboard, Member List, and Attendance Logs. |
+| **`LoginActivity`** | Secures access to the application and attendance logs. |
+| **`RegisterActivity`** | Handles the onboarding of new members. Captures a clear face image, extracts the embedding via TFLite, and saves the `MemberEntity` to Room. |
+| **`RecognitionActivity`** | The core live-scanning view. It binds the CameraX `ImageAnalysis` use-case to ML Kit, draws bounding boxes on an overlay, and queues faces for TFLite embedding generation and matching. |
+| **`GroupPhotoActivity`** | Provides an interface to pick an image from the gallery, detect all faces in the static image, and run batch recognition to mark attendance for everyone found. |
+| **`db/` Package** | Contains the Room `AppDatabase`, Data Access Objects (`DAO`), and Entities (`MemberEntity`, `LogEntity`) representing the data schema. |
+| **`ml/Facenet`** | The generated TFLite wrapper class used to invoke the `.tflite` model. |
+
+---
+
+## 🚀 Application Workflow
+
+1. **Registration**: 
+   - Admin opens the Registration screen.
+   - A photo of the member is taken.
+   - ML Kit detects the face bounding box and crops it.
+   - The cropped face is passed through the `facenet.tflite` model to generate an embedding.
+   - The embedding and name are saved to the Room Database.
+2. **Live Attendance**:
+   - Admin opens the scanner (`RecognitionActivity`).
+   - CameraX streams frames to ML Kit.
+   - ML Kit assigns a temporary tracking ID to a face.
+   - If the tracking ID hasn't been recognized recently, the face is queued for TFLite processing.
+   - The TFLite model generates the live embedding and compares it against the database.
+   - If a match is found (distance < threshold), a log entry is created in Room.
+3. **Review**:
+   - Admin navigates to the Dashboard or Logs tab in `MainActivity` to view the generated attendance records.
+
+---
+
+## 🛠️ Setup & Prerequisites
+
+### Prerequisites
+- **Android Studio** (Flamingo or newer recommended).
+- A physical Android device or emulator running **API Level 24 (Android 7.0)** or higher. (A physical device is recommended for optimal camera performance).
+
+### Installation Instructions
+1. Clone the repository to your local machine:
+   ```bash
+   git clone https://github.com/abhishekkhade9137/Attendance-Android.git
+   ```
 2. Open the project in **Android Studio**.
-3. Allow Gradle to sync and download all dependencies (ML Kit, TensorFlow Lite, CameraX, Room).
-4. Connect a physical Android device or start an emulator (Minimum SDK: 24, Target SDK: 34).
-5. Build and run the application.
+3. Allow Gradle to sync. Ensure you have an active internet connection so Gradle can download the required ML Kit, TensorFlow, and CameraX dependencies.
+4. Click **Run** (`Shift + F10`) to compile and deploy the app to your connected device.
 
-## Permissions Required
+---
 
-- **Camera**: For real-time face detection and member registration.
-- **Storage**: For picking group photos from the gallery.
+## 🔐 Permissions Required
+
+To function correctly, the app requests the following runtime permissions:
+- **`CAMERA`**: Required for live face scanning and taking photos during member registration.
+- **`READ_EXTERNAL_STORAGE` / `WRITE_EXTERNAL_STORAGE`**: Required to select group photos from the gallery and export/manage attendance data.
