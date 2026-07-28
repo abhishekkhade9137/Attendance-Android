@@ -1,0 +1,630 @@
+[2026-07-28T11:17:42Z] === Starting 30-Minute Active ADB Stress Session ===
+[2026-07-28T11:17:42Z] Start Timestamp: 2026-07-28T11:17:42Z
+[2026-07-28T11:17:42Z] Clearing logcat buffer (adb logcat -c)...
+[2026-07-28T11:17:43Z] --- Starting Test Cycle #1 (Elapsed: 1s) ---
+[2026-07-28T11:17:43Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:17:45Z] Tested Wrong PIN input: ''
+[2026-07-28T11:17:47Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:17:49Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:17:51Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:17:52Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:17:54Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:18:01Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:18:07Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:18:09Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:18:21Z] --- Starting Test Cycle #2 (Elapsed: 39s) ---
+[2026-07-28T11:18:21Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:18:23Z] Tested Wrong PIN input: ''
+[2026-07-28T11:18:25Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:18:27Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:18:28Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:18:30Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:18:31Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:18:35Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:18:43Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:18:45Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:18:53Z] --- Starting Test Cycle #3 (Elapsed: 70s) ---
+[2026-07-28T11:18:53Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:18:55Z] Tested Wrong PIN input: ''
+[2026-07-28T11:18:57Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:18:58Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:19:00Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:19:02Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:19:03Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:19:07Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:19:14Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:19:16Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:19:24Z] --- Starting Test Cycle #4 (Elapsed: 102s) ---
+[2026-07-28T11:19:24Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:19:26Z] Tested Wrong PIN input: ''
+[2026-07-28T11:19:27Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:19:29Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:19:31Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:19:33Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:19:34Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:19:38Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:19:45Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:19:46Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:19:54Z] --- Starting Test Cycle #5 (Elapsed: 132s) ---
+[2026-07-28T11:19:54Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:19:56Z] Tested Wrong PIN input: ''
+[2026-07-28T11:19:58Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:20:00Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:20:01Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:20:03Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:20:04Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:20:09Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:20:15Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:20:16Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:20:24Z] --- Starting Test Cycle #6 (Elapsed: 162s) ---
+[2026-07-28T11:20:24Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:20:26Z] Tested Wrong PIN input: ''
+[2026-07-28T11:20:28Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:20:30Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:20:31Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:20:33Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:20:34Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:20:38Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:20:45Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:20:47Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:20:54Z] --- Starting Test Cycle #7 (Elapsed: 192s) ---
+[2026-07-28T11:20:54Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:20:56Z] Tested Wrong PIN input: ''
+[2026-07-28T11:20:58Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:20:59Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:21:01Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:21:03Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:21:04Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:21:08Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:21:15Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:21:17Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:21:24Z] --- Starting Test Cycle #8 (Elapsed: 222s) ---
+[2026-07-28T11:21:24Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:21:26Z] Tested Wrong PIN input: ''
+[2026-07-28T11:21:28Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:21:29Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:21:31Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:21:33Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:21:34Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:21:39Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:21:46Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:21:47Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:21:55Z] --- Starting Test Cycle #9 (Elapsed: 253s) ---
+[2026-07-28T11:21:55Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:21:57Z] Tested Wrong PIN input: ''
+[2026-07-28T11:21:59Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:22:01Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:22:02Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:22:04Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:22:05Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:22:09Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:22:19Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:22:21Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:22:29Z] --- Starting Test Cycle #10 (Elapsed: 286s) ---
+[2026-07-28T11:22:29Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:22:30Z] Tested Wrong PIN input: ''
+[2026-07-28T11:22:32Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:22:34Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:22:36Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:22:37Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:22:39Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:22:43Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:22:50Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:22:51Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:23:00Z] --- Starting Test Cycle #11 (Elapsed: 317s) ---
+[2026-07-28T11:23:00Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:23:01Z] Tested Wrong PIN input: ''
+[2026-07-28T11:23:03Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:23:05Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:23:06Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:23:08Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:23:10Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:23:14Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:23:21Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:23:23Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:23:31Z] --- Starting Test Cycle #12 (Elapsed: 349s) ---
+[2026-07-28T11:23:31Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:23:33Z] Tested Wrong PIN input: ''
+[2026-07-28T11:23:34Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:23:36Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:23:38Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:23:39Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:23:41Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:23:45Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:23:51Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:23:53Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:24:01Z] --- Starting Test Cycle #13 (Elapsed: 379s) ---
+[2026-07-28T11:24:01Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:24:03Z] Tested Wrong PIN input: ''
+[2026-07-28T11:24:05Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:24:06Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:24:08Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:24:10Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:24:11Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:24:15Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:24:23Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:24:24Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:24:32Z] --- Starting Test Cycle #14 (Elapsed: 410s) ---
+[2026-07-28T11:24:32Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:24:34Z] Tested Wrong PIN input: ''
+[2026-07-28T11:24:36Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:24:38Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:24:39Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:24:41Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:24:43Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:24:47Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:24:54Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:24:55Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:25:03Z] --- Starting Test Cycle #15 (Elapsed: 441s) ---
+[2026-07-28T11:25:03Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:25:05Z] Tested Wrong PIN input: ''
+[2026-07-28T11:25:07Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:25:09Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:25:10Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:25:12Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:25:14Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:25:18Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:25:25Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:25:26Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:25:34Z] --- Starting Test Cycle #16 (Elapsed: 472s) ---
+[2026-07-28T11:25:34Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:25:36Z] Tested Wrong PIN input: ''
+[2026-07-28T11:25:38Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:25:40Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:25:41Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:25:43Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:25:44Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:25:49Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:25:56Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:25:58Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:26:06Z] --- Starting Test Cycle #17 (Elapsed: 504s) ---
+[2026-07-28T11:26:06Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:26:08Z] Tested Wrong PIN input: ''
+[2026-07-28T11:26:10Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:26:12Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:26:14Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:26:15Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:26:17Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:26:21Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:26:28Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:26:30Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:26:38Z] --- Starting Test Cycle #18 (Elapsed: 536s) ---
+[2026-07-28T11:26:38Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:26:40Z] Tested Wrong PIN input: ''
+[2026-07-28T11:26:42Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:26:44Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:26:45Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:26:47Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:26:49Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:26:53Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:27:00Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:27:02Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:27:10Z] --- Starting Test Cycle #19 (Elapsed: 568s) ---
+[2026-07-28T11:27:10Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:27:12Z] Tested Wrong PIN input: ''
+[2026-07-28T11:27:14Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:27:15Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:27:17Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:27:19Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:27:20Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:27:24Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:27:32Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:27:33Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:27:42Z] --- Starting Test Cycle #20 (Elapsed: 599s) ---
+[2026-07-28T11:27:42Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:27:44Z] Tested Wrong PIN input: ''
+[2026-07-28T11:27:45Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:27:47Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:27:49Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:27:51Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:27:52Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:27:56Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:28:03Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:28:05Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:28:13Z] --- Starting Test Cycle #21 (Elapsed: 631s) ---
+[2026-07-28T11:28:13Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:28:15Z] Tested Wrong PIN input: ''
+[2026-07-28T11:28:17Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:28:18Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:28:20Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:28:22Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:28:23Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:28:27Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:28:34Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:28:36Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:28:44Z] --- Starting Test Cycle #22 (Elapsed: 662s) ---
+[2026-07-28T11:28:44Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:28:46Z] Tested Wrong PIN input: ''
+[2026-07-28T11:28:48Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:28:50Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:28:51Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:28:53Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:28:55Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:28:59Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:29:06Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:29:07Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:29:16Z] --- Starting Test Cycle #23 (Elapsed: 693s) ---
+[2026-07-28T11:29:16Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:29:17Z] Tested Wrong PIN input: ''
+[2026-07-28T11:29:19Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:29:21Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:29:22Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:29:24Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:29:26Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:29:30Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:29:37Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:29:39Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:29:47Z] --- Starting Test Cycle #24 (Elapsed: 725s) ---
+[2026-07-28T11:29:47Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:29:49Z] Tested Wrong PIN input: ''
+[2026-07-28T11:29:51Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:29:52Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:29:54Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:29:56Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:29:57Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:30:02Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:30:09Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:30:11Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:30:19Z] --- Starting Test Cycle #25 (Elapsed: 757s) ---
+[2026-07-28T11:30:19Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:30:21Z] Tested Wrong PIN input: ''
+[2026-07-28T11:30:23Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:30:25Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:30:27Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:30:28Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:30:30Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:30:34Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:30:41Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:30:42Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:30:51Z] --- Starting Test Cycle #26 (Elapsed: 789s) ---
+[2026-07-28T11:30:51Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:30:53Z] Tested Wrong PIN input: ''
+[2026-07-28T11:30:54Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:30:56Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:30:58Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:30:59Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:31:01Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:31:05Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:31:12Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:31:14Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:31:22Z] --- Starting Test Cycle #27 (Elapsed: 820s) ---
+[2026-07-28T11:31:22Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:31:24Z] Tested Wrong PIN input: ''
+[2026-07-28T11:31:26Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:31:28Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:31:29Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:31:31Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:31:32Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:31:36Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:31:44Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:31:46Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:31:54Z] --- Starting Test Cycle #28 (Elapsed: 851s) ---
+[2026-07-28T11:31:54Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:31:56Z] Tested Wrong PIN input: ''
+[2026-07-28T11:31:57Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:31:59Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:32:01Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:32:02Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:32:04Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:32:08Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:32:15Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:32:17Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:32:25Z] --- Starting Test Cycle #29 (Elapsed: 883s) ---
+[2026-07-28T11:32:25Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:32:27Z] Tested Wrong PIN input: ''
+[2026-07-28T11:32:29Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:32:30Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:32:32Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:32:34Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:32:35Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:32:39Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:32:47Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:32:48Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:32:56Z] --- Starting Test Cycle #30 (Elapsed: 914s) ---
+[2026-07-28T11:32:56Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:32:58Z] Tested Wrong PIN input: ''
+[2026-07-28T11:33:00Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:33:02Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:33:03Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:33:05Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:33:06Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:33:10Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:33:41Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:33:43Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:33:55Z] --- Starting Test Cycle #31 (Elapsed: 973s) ---
+[2026-07-28T11:33:55Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:33:57Z] Tested Wrong PIN input: ''
+[2026-07-28T11:33:59Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:34:01Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:34:02Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:34:04Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:34:06Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:34:10Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:34:19Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:34:23Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:34:32Z] --- Starting Test Cycle #32 (Elapsed: 1010s) ---
+[2026-07-28T11:34:32Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:34:34Z] Tested Wrong PIN input: ''
+[2026-07-28T11:34:36Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:34:38Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:34:39Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:34:41Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:34:43Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:34:47Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:34:55Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:34:57Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:35:07Z] --- Starting Test Cycle #33 (Elapsed: 1044s) ---
+[2026-07-28T11:35:07Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:35:09Z] Tested Wrong PIN input: ''
+[2026-07-28T11:35:10Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:35:12Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:35:14Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:35:16Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:35:17Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:35:22Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:35:31Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:35:32Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:35:41Z] --- Starting Test Cycle #34 (Elapsed: 1079s) ---
+[2026-07-28T11:35:41Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:35:43Z] Tested Wrong PIN input: ''
+[2026-07-28T11:35:45Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:35:46Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:35:48Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:35:50Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:35:51Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:35:55Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:36:04Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:36:06Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:36:15Z] --- Starting Test Cycle #35 (Elapsed: 1113s) ---
+[2026-07-28T11:36:15Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:36:20Z] Tested Wrong PIN input: ''
+[2026-07-28T11:36:24Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:36:27Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:36:30Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:36:31Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:36:33Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:36:37Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:36:44Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:36:45Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:36:54Z] --- Starting Test Cycle #36 (Elapsed: 1152s) ---
+[2026-07-28T11:36:54Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:36:56Z] Tested Wrong PIN input: ''
+[2026-07-28T11:36:58Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:37:00Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:37:01Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:37:03Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:37:04Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:37:09Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:37:16Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:37:18Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:37:27Z] --- Starting Test Cycle #37 (Elapsed: 1185s) ---
+[2026-07-28T11:37:27Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:37:29Z] Tested Wrong PIN input: ''
+[2026-07-28T11:37:31Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:37:32Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:37:34Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:37:36Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:37:37Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:37:42Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:37:50Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:37:52Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:38:03Z] --- Starting Test Cycle #38 (Elapsed: 1221s) ---
+[2026-07-28T11:38:03Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:38:05Z] Tested Wrong PIN input: ''
+[2026-07-28T11:38:07Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:38:08Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:38:10Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:38:12Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:38:13Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:38:17Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:38:26Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:38:28Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:38:37Z] --- Starting Test Cycle #39 (Elapsed: 1255s) ---
+[2026-07-28T11:38:37Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:38:39Z] Tested Wrong PIN input: ''
+[2026-07-28T11:38:41Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:38:43Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:38:44Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:38:46Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:38:48Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:38:52Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:39:01Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:39:02Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:39:11Z] --- Starting Test Cycle #40 (Elapsed: 1289s) ---
+[2026-07-28T11:39:11Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:39:14Z] Tested Wrong PIN input: ''
+[2026-07-28T11:39:16Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:39:18Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:39:21Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:39:23Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:39:24Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:39:30Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:39:37Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:39:38Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:39:47Z] --- Starting Test Cycle #41 (Elapsed: 1325s) ---
+[2026-07-28T11:39:47Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:39:49Z] Tested Wrong PIN input: ''
+[2026-07-28T11:39:51Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:39:52Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:39:54Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:39:56Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:39:57Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:40:02Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:40:11Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:40:12Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:40:21Z] --- Starting Test Cycle #42 (Elapsed: 1359s) ---
+[2026-07-28T11:40:21Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:40:23Z] Tested Wrong PIN input: ''
+[2026-07-28T11:40:25Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:40:27Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:40:28Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:40:30Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:40:32Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:40:36Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:40:43Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:40:45Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:40:54Z] --- Starting Test Cycle #43 (Elapsed: 1392s) ---
+[2026-07-28T11:40:54Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:40:56Z] Tested Wrong PIN input: ''
+[2026-07-28T11:40:58Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:41:00Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:41:01Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:41:03Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:41:05Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:41:09Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:41:19Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:41:21Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:41:30Z] --- Starting Test Cycle #44 (Elapsed: 1427s) ---
+[2026-07-28T11:41:30Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:41:32Z] Tested Wrong PIN input: ''
+[2026-07-28T11:41:33Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:41:35Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:41:37Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:41:38Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:41:40Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:41:44Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:41:54Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:41:55Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:42:05Z] --- Starting Test Cycle #45 (Elapsed: 1463s) ---
+[2026-07-28T11:42:05Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:42:07Z] Tested Wrong PIN input: ''
+[2026-07-28T11:42:08Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:42:10Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:42:12Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:42:14Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:42:15Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:42:19Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:42:28Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:42:30Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:42:39Z] --- Starting Test Cycle #46 (Elapsed: 1497s) ---
+[2026-07-28T11:42:39Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:42:41Z] Tested Wrong PIN input: ''
+[2026-07-28T11:42:43Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:42:44Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:42:46Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:42:48Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:42:49Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:42:54Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:43:01Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:43:03Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:43:12Z] --- Starting Test Cycle #47 (Elapsed: 1529s) ---
+[2026-07-28T11:43:12Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:43:13Z] Tested Wrong PIN input: ''
+[2026-07-28T11:43:15Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:43:17Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:43:19Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:43:20Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:43:22Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:43:26Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:43:33Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:43:34Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:43:44Z] --- Starting Test Cycle #48 (Elapsed: 1561s) ---
+[2026-07-28T11:43:44Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:43:46Z] Tested Wrong PIN input: ''
+[2026-07-28T11:43:47Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:43:49Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:43:51Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:43:52Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:43:54Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:43:58Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:44:07Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:44:09Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:44:17Z] --- Starting Test Cycle #49 (Elapsed: 1595s) ---
+[2026-07-28T11:44:17Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:44:19Z] Tested Wrong PIN input: ''
+[2026-07-28T11:44:21Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:44:23Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:44:24Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:44:26Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:44:28Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:44:32Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:44:39Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:44:40Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:44:49Z] --- Starting Test Cycle #50 (Elapsed: 1627s) ---
+[2026-07-28T11:44:49Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:44:51Z] Tested Wrong PIN input: ''
+[2026-07-28T11:44:53Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:44:54Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:44:56Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:44:58Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:44:59Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:45:04Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:45:11Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:45:13Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:45:22Z] --- Starting Test Cycle #51 (Elapsed: 1660s) ---
+[2026-07-28T11:45:22Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:45:24Z] Tested Wrong PIN input: ''
+[2026-07-28T11:45:25Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:45:27Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:45:29Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:45:31Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:45:32Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:45:36Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:45:45Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:45:46Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:45:55Z] --- Starting Test Cycle #52 (Elapsed: 1693s) ---
+[2026-07-28T11:45:55Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:45:57Z] Tested Wrong PIN input: ''
+[2026-07-28T11:45:59Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:46:00Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:46:02Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:46:04Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:46:05Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:46:10Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:46:19Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:46:20Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:46:29Z] --- Starting Test Cycle #53 (Elapsed: 1727s) ---
+[2026-07-28T11:46:29Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:46:31Z] Tested Wrong PIN input: ''
+[2026-07-28T11:46:33Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:46:35Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:46:36Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:46:38Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:46:40Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:46:44Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:46:52Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:46:54Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:47:02Z] --- Starting Test Cycle #54 (Elapsed: 1760s) ---
+[2026-07-28T11:47:02Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:47:04Z] Tested Wrong PIN input: ''
+[2026-07-28T11:47:06Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:47:08Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:47:09Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:47:11Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:47:12Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:47:17Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:47:24Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:47:25Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:47:36Z] --- Starting Test Cycle #55 (Elapsed: 1793s) ---
+[2026-07-28T11:47:36Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:47:38Z] Tested Wrong PIN input: ''
+[2026-07-28T11:47:39Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:47:41Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:47:43Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:47:44Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:47:46Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:47:50Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:47:59Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:48:01Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:48:10Z] --- Starting Test Cycle #56 (Elapsed: 1828s) ---
+[2026-07-28T11:48:10Z] Module A: Testing Wrong PINs & Restricted PIN Authentication
+[2026-07-28T11:48:12Z] Tested Wrong PIN input: ''
+[2026-07-28T11:48:14Z] Tested Wrong PIN input: '12'
+[2026-07-28T11:48:15Z] Tested Wrong PIN input: 'abc'
+[2026-07-28T11:48:17Z] Tested Wrong PIN input: '9999'
+[2026-07-28T11:48:19Z] Submitted PIN '0044' -> Authenticating...
+[2026-07-28T11:48:20Z] Module B: Rapid Multi-Tap Sequences & Controls
+[2026-07-28T11:48:25Z] Module C: Rapid Fragment Tab Switching (Dashboard <-> Members <-> Logs)
+[2026-07-28T11:48:33Z] Performing swipe / scroll gestures on fragment views
+[2026-07-28T11:48:35Z] Module D: System Events (Back key, Home key, Force Stop, Relaunch)
+[2026-07-28T11:48:44Z] Target duration of 1830s reached. Total elapsed: 1862.31s
+[2026-07-28T11:48:44Z] === Active ADB Testing Session Completed ===
+[2026-07-28T11:48:44Z] End Timestamp: 2026-07-28T11:48:44Z
+[2026-07-28T11:48:44Z] Total Duration: 1862.31 seconds (31.04 minutes)
+[2026-07-28T11:48:44Z] Total Test Cycles Completed: 56
+[2026-07-28T11:48:44Z] Total ADB Commands Issued: 7840
+[2026-07-28T11:48:44Z] --- Running Logcat Crash Audit (adb logcat -d *:E) ---
+[2026-07-28T11:48:45Z] Crash Audit Results:
+[2026-07-28T11:48:45Z]   - Fatal Exceptions / Crashes: 57
+[2026-07-28T11:48:45Z]   - ANRs: 2
+[2026-07-28T11:48:45Z]   - Application Error Entries in logcat: 56

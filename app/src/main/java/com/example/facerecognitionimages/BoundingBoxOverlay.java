@@ -50,7 +50,7 @@ public class BoundingBoxOverlay extends View {
         paintRecognized.setStrokeWidth(8f);
 
         paintUnrecognized = new Paint();
-        paintUnrecognized.setColor(Color.RED);
+        paintUnrecognized.setColor(Color.WHITE);
         paintUnrecognized.setStyle(Paint.Style.STROKE);
         paintUnrecognized.setStrokeWidth(8f);
 

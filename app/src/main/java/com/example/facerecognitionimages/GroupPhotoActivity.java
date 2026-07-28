@@ -73,6 +73,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
     private List<MemberEntity> allMembers = new ArrayList<>();
     private List<String> uniqueMemberNames = new ArrayList<>();
     private List<BoundingBoxOverlay.Box> detectedBoxes = new ArrayList<>();
+    private volatile boolean isActivityDestroyed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,6 +144,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
             allMembers = AppDatabase.getDatabase(this).memberDao().getAllMembers();
             uniqueMemberNames.clear();
             for (MemberEntity m : allMembers) {
+                if (isActivityDestroyed) return;
                 if (!uniqueMemberNames.contains(m.name)) {
                     uniqueMemberNames.add(m.name);
                 }
@@ -150,7 +152,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
             java.util.Collections.sort(uniqueMemberNames);
 
             runOnUiThread(() -> {
-                if (isFinishing() || isDestroyed()) return;
+                if (isFinishing() || isDestroyed() || isActivityDestroyed) return;
                 try {
                     currentBitmap = getBitmapFromUri(imageUri);
                     if (currentBitmap != null) {
@@ -176,6 +178,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
     }
 
     private void processFaces(List<Face> faces) {
+        if (isActivityDestroyed || isFinishing()) return;
         if (faces.isEmpty()) {
             processingCard.setVisibility(View.GONE);
             statusText.setText("No faces detected in the image.");
@@ -187,6 +190,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
 
         executor.execute(() -> {
             for (Face face : faces) {
+                if (isActivityDestroyed) return;
                 Rect bounds = face.getBoundingBox();
                 
                 // Adjust bounds for aspect ratio difference between bitmap and imageView
@@ -219,7 +223,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
             }
 
             runOnUiThread(() -> {
-                if (isFinishing() || isDestroyed()) return;
+                if (isFinishing() || isDestroyed() || isActivityDestroyed) return;
                 processingCard.setVisibility(View.GONE);
                 mapBoxesToScreenAndDraw();
                 
@@ -344,7 +348,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
             }
             
             runOnUiThread(() -> {
-                if (isFinishing() || isDestroyed()) return;
+                if (isFinishing() || isDestroyed() || isActivityDestroyed) return;
                 processingCard.setVisibility(View.GONE);
                 
                 android.content.SharedPreferences prefs = getSharedPreferences(SettingsActivity.PREF_NAME, Context.MODE_PRIVATE);
@@ -365,8 +369,10 @@ public class GroupPhotoActivity extends AppCompatActivity {
                     try {
                         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                         MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
-                        mp.start();
-                        mp.setOnCompletionListener(MediaPlayer::release);
+                        if (mp != null) {
+                            mp.start();
+                            mp.setOnCompletionListener(MediaPlayer::release);
+                        }
                     } catch (Exception e) {}
                 }
 
@@ -377,7 +383,7 @@ public class GroupPhotoActivity extends AppCompatActivity {
     }
 
     private float[] getEmbedding(Bitmap bitmap, Rect bounds) {
-        if (model == null) return null;
+        if (model == null || bitmap == null || bitmap.getWidth() <= 0 || bitmap.getHeight() <= 0) return null;
         try {
             int left = Math.max(0, bounds.left);
             int top = Math.max(0, bounds.top);
@@ -455,6 +461,8 @@ public class GroupPhotoActivity extends AppCompatActivity {
             Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
             if (is != null) is.close();
 
+            if (bitmap == null || bitmap.getWidth() <= 0 || bitmap.getHeight() <= 0) return null;
+
             is = getContentResolver().openInputStream(uri);
             ExifInterface exif = new ExifInterface(is);
             int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
@@ -473,5 +481,14 @@ public class GroupPhotoActivity extends AppCompatActivity {
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        isActivityDestroyed = true;
+        super.onDestroy();
+        if (executor != null) executor.shutdownNow();
+        if (model != null) model.close();
+        if (detector != null) detector.close();
     }
 }

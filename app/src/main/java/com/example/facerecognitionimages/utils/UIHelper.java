@@ -24,20 +24,35 @@ public class UIHelper {
         Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_LONG);
         View snackbarView = snackbar.getView();
         
-        // Setup top sliding behavior
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) snackbarView.getLayoutParams();
-        params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-        params.setMargins(0, 100, 0, 0);
-        snackbarView.setLayoutParams(params);
+        // Setup top sliding behavior safely
+        android.view.ViewGroup.LayoutParams lp = snackbarView.getLayoutParams();
+        if (lp instanceof FrameLayout.LayoutParams) {
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) lp;
+            params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+            params.setMargins(0, 100, 0, 0);
+            snackbarView.setLayoutParams(params);
+        } else if (lp instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
+            androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams params =
+                (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) lp;
+            params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+            params.setMargins(0, 100, 0, 0);
+            snackbarView.setLayoutParams(params);
+        } else if (lp instanceof android.view.ViewGroup.MarginLayoutParams) {
+            android.view.ViewGroup.MarginLayoutParams params = (android.view.ViewGroup.MarginLayoutParams) lp;
+            params.setMargins(0, 100, 0, 0);
+            snackbarView.setLayoutParams(params);
+        }
         
         // Custom styling
         snackbarView.setBackgroundColor(Color.parseColor(colorHex));
         snackbarView.setBackground(getRoundedBackground(colorHex));
         
         TextView textView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
-        textView.setTextColor(Color.WHITE);
-        textView.setTextSize(16f);
-        textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        if (textView != null) {
+            textView.setTextColor(Color.WHITE);
+            textView.setTextSize(16f);
+            textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        }
         
         snackbar.show();
     }

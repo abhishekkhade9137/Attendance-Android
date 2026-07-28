@@ -74,7 +74,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class RecognitionActivity extends AppCompatActivity {
 
     private PreviewView previewView;
-    private ImageView overlayView;
+    private BoundingBoxOverlay overlayView;
     private TextView statusText;
     private View processingCard;
     private ExecutorService cameraExecutor;
@@ -92,7 +92,7 @@ public class RecognitionActivity extends AppCompatActivity {
             this.embedding = embedding;
         }
     }
-    public static java.util.List<PersonEmbedding> faceEmbeddingsList = new java.util.ArrayList<>();
+    public static volatile java.util.List<PersonEmbedding> faceEmbeddingsList = new java.util.concurrent.CopyOnWriteArrayList<>();
     private static class QueuedFace {
         Bitmap bitmap;
         Integer trackingId;
@@ -113,6 +113,16 @@ public class RecognitionActivity extends AppCompatActivity {
     private Paint textPaint = new Paint();
     
     private final AtomicBoolean isProcessingFrame = new AtomicBoolean(false);
+    private volatile boolean isActivityDestroyed = false;
+
+    // Performance tracking
+    private long lastFpsTime = 0;
+    private int frameCount = 0;
+    private static final String PERF_TAG = "PerfLog";
+    
+    // Reusable memory buffers for neural network (prevents OOM Native Crashes)
+    private ByteBuffer faceBuffer;
+    private int[] facePixels;
 
     private static final int PERMISSION_CODE = 100;
 
@@ -151,6 +161,9 @@ public class RecognitionActivity extends AppCompatActivity {
         textPaint.setFakeBoldText(true);
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        
+        setupToolbar();
+
         cameraExecutor = Executors.newSingleThreadExecutor();
         recognitionExecutor = Executors.newSingleThreadExecutor(r -> new Thread(() -> {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
@@ -177,7 +190,13 @@ public class RecognitionActivity extends AppCompatActivity {
                 model = Facenet.newInstance(this, tfOptions);
             } catch (Exception e) {
                 Log.e("RecognitionActivity", "GPU acceleration failed, falling back to CPU", e);
-                model = Facenet.newInstance(this);
+                // x86 emulators have a known native SIGSEGV bug in TFLite when using multi-threading.
+                int threads = android.os.Build.SUPPORTED_ABIS[0].contains("x86") ? 1 : 4;
+                org.tensorflow.lite.support.model.Model.Options cpuOptions = new org.tensorflow.lite.support.model.Model.Options.Builder()
+                        .setDevice(org.tensorflow.lite.support.model.Model.Device.CPU)
+                        .setNumThreads(threads)
+                        .build();
+                model = Facenet.newInstance(this, cpuOptions);
             }
         } catch (IOException e) {
             Log.e("RecognitionActivity", "Model error", e);
@@ -185,11 +204,42 @@ public class RecognitionActivity extends AppCompatActivity {
 
         loadEmbeddings();
         startRecognitionLoop();
+        
+        setupModeToggle();
 
         if (allPermissionsGranted()) {
             startCamera();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_CODE);
+        }
+    }
+
+    private void setupModeToggle() {
+        com.google.android.material.button.MaterialButtonToggleGroup toggleGroup = findViewById(R.id.toggleModeGroup);
+        if ("OUT".equals(currentAttendanceType)) {
+            toggleGroup.check(R.id.toggleModeOut);
+        } else {
+            toggleGroup.check(R.id.toggleModeIn);
+        }
+        
+        toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                if (checkedId == R.id.toggleModeIn) {
+                    currentAttendanceType = "IN";
+                } else if (checkedId == R.id.toggleModeOut) {
+                    currentAttendanceType = "OUT";
+                }
+                setupToolbar();
+                recognizedTrackingIds.clear(); // Re-recognize to mark new type
+                UIHelper.showSuccessSnackbar(findViewById(android.R.id.content), "Mode changed to: " + currentAttendanceType);
+            }
+        });
+    }
+
+    private void setupToolbar() {
+        TextView toolbarTitle = findViewById(R.id.toolbarTitle);
+        if (toolbarTitle != null) {
+            toolbarTitle.setText("Live Attendance: " + currentAttendanceType);
         }
     }
 
@@ -207,34 +257,59 @@ public class RecognitionActivity extends AppCompatActivity {
         cameraProviderFuture.addListener(() -> {
             try {
                 cameraProvider = cameraProviderFuture.get();
-                Preview preview = new Preview.Builder().build();
+                Preview preview = new Preview.Builder()
+                        .setTargetAspectRatio(androidx.camera.core.AspectRatio.RATIO_16_9)
+                        .build();
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
                 ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                        .setTargetAspectRatio(androidx.camera.core.AspectRatio.RATIO_16_9)
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build();
 
                 imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
-                    if (isProcessingFrame.get()) {
+                    if (isProcessingFrame.get() || isActivityDestroyed || isFinishing()) {
                         imageProxy.close();
                         return;
                     }
                     isProcessingFrame.set(true);
-                    // Extract bitmap and pass to UI thread for drawing and MLKit processing
-                    // We must do it on UI thread to ensure bitmap matches previewView accurately for bounds
-                    runOnUiThread(() -> {
-                        Bitmap bitmap = previewView.getBitmap();
-                        if (bitmap != null) {
-                            InputImage image = InputImage.fromBitmap(bitmap, 0);
-                            detector.process(image)
-                                .addOnSuccessListener(faces -> handleFaces(faces, bitmap))
-                                .addOnFailureListener(e -> isProcessingFrame.set(false))
-                                .addOnCompleteListener(task -> imageProxy.close());
-                        } else {
-                            imageProxy.close();
-                            isProcessingFrame.set(false);
-                        }
-                    });
+                    
+                    // FPS Tracking
+                    frameCount++;
+                    long currentMillis = System.currentTimeMillis();
+                    if (currentMillis - lastFpsTime >= 1000) {
+                        Log.d(PERF_TAG, "Camera & Tracking Loop FPS: " + frameCount);
+                        frameCount = 0;
+                        lastFpsTime = currentMillis;
+                    }
+                    
+                    long startFrameTime = System.currentTimeMillis();
+                    
+                    @androidx.annotation.OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
+                    android.media.Image mediaImage = imageProxy.getImage();
+                    if (mediaImage != null) {
+                        int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
+                        InputImage image = InputImage.fromMediaImage(mediaImage, rotationDegrees);
+                        
+                        detector.process(image)
+                            .addOnSuccessListener(cameraExecutor, faces -> {
+                                if (!isActivityDestroyed && !isFinishing()) {
+                                    handleFaces(faces, imageProxy, rotationDegrees);
+                                }
+                            })
+                            .addOnFailureListener(cameraExecutor, e -> {})
+                            .addOnCompleteListener(cameraExecutor, task -> {
+                                long mlkitLatency = System.currentTimeMillis() - startFrameTime;
+                                if (frameCount == 1) { // Log once per second
+                                    Log.d(PERF_TAG, "MLKit Detection latency: " + mlkitLatency + "ms");
+                                }
+                                imageProxy.close();
+                                isProcessingFrame.set(false);
+                            });
+                    } else {
+                        imageProxy.close();
+                        isProcessingFrame.set(false);
+                    }
                 });
 
                 cameraProvider.unbindAll();
@@ -263,73 +338,139 @@ public class RecognitionActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private void handleFaces(List<Face> faces, Bitmap bitmap) {
+    private void handleFaces(List<Face> faces, androidx.camera.core.ImageProxy imageProxy, int rotationDegrees) {
         if (faces.isEmpty()) {
-            if (reusableCanvas != null) {
-                reusableCanvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);
-                overlayView.invalidate();
-            }
-            isProcessingFrame.set(false);
+            runOnUiThread(() -> overlayView.setBoxes(new java.util.ArrayList<>()));
             return;
         }
 
-        if (reusableBitmap == null || reusableBitmap.getWidth() != bitmap.getWidth() || reusableBitmap.getHeight() != bitmap.getHeight()) {
-            reusableBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
-            reusableCanvas = new Canvas(reusableBitmap);
-        }
-        
-        reusableCanvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);
-
+        Bitmap rawBitmap = null;
         long currentTime = System.currentTimeMillis();
+        
+        int viewWidth = overlayView.getWidth();
+        int viewHeight = overlayView.getHeight();
+        
+        int imageWidth = imageProxy.getWidth();
+        int imageHeight = imageProxy.getHeight();
+        if (rotationDegrees == 90 || rotationDegrees == 270) {
+            imageWidth = imageProxy.getHeight();
+            imageHeight = imageProxy.getWidth();
+        }
+
+        float scaleX = (float) viewWidth / imageWidth;
+        float scaleY = (float) viewHeight / imageHeight;
+        float scale = Math.max(scaleX, scaleY);
+        float dx = (viewWidth - imageWidth * scale) / 2f;
+        float dy = (viewHeight - imageHeight * scale) / 2f;
+
+        boolean isFrontCamera = (currentCameraSelector == androidx.camera.core.CameraSelector.DEFAULT_FRONT_CAMERA);
+        List<BoundingBoxOverlay.Box> mappedBoxes = new java.util.ArrayList<>();
 
         for (Face face : faces) {
             Rect bounds = face.getBoundingBox();
             Integer trackingId = face.getTrackingId();
 
-            if (trackingId != null && recognizedTrackingIds.containsKey(trackingId)) {
-                // Already recognized, just draw green box and name
-                boxPaint.setColor(Color.GREEN);
-                reusableCanvas.drawRect(bounds, boxPaint);
-                textPaint.setColor(Color.GREEN);
-                reusableCanvas.drawText(recognizedTrackingIds.get(trackingId), bounds.left, bounds.top - 10, textPaint);
-                continue;
+            // 1. Map coordinates for drawing (done instantly for 60fps tracking)
+            float mappedLeft = bounds.left;
+            float mappedRight = bounds.right;
+            if (isFrontCamera) {
+                mappedLeft = imageWidth - bounds.right;
+                mappedRight = imageWidth - bounds.left;
             }
 
-            boxPaint.setColor(Color.WHITE);
-            reusableCanvas.drawRect(bounds, boxPaint);
+            int leftScreen = (int) (mappedLeft * scale + dx);
+            int topScreen = (int) (bounds.top * scale + dy);
+            int rightScreen = (int) (mappedRight * scale + dx);
+            int bottomScreen = (int) (bounds.bottom * scale + dy);
+            Rect mappedRect = new Rect(leftScreen, topScreen, rightScreen, bottomScreen);
 
+            // 2. Check tracking status
+            String name = null;
+            boolean recognized = false;
+            boolean needsRecognition = false;
+            
             if (trackingId != null) {
-                Long lastQueued = lastQueuedTime.get(trackingId);
-                // Queue same face at most once every 1 second (1000ms) to ensure it gets recognized quickly if initial crop was bad
-                if (lastQueued == null || currentTime - lastQueued > 1000) {
-                    lastQueuedTime.put(trackingId, currentTime);
-                    
-                    int left = Math.max(0, bounds.left);
-                    int top = Math.max(0, bounds.top);
-                    int right = Math.min(bitmap.getWidth(), bounds.right);
-                    int bottom = Math.min(bitmap.getHeight(), bounds.bottom);
-                    int width = right - left;
-                    int height = bottom - top;
-
-                    if (width > 0 && height > 0) {
-                        Bitmap cropped = Bitmap.createBitmap(bitmap, left, top, width, height);
-                        faceProcessingQueue.add(new QueuedFace(cropped, trackingId));
+                if (recognizedTrackingIds.containsKey(trackingId)) {
+                    name = recognizedTrackingIds.get(trackingId);
+                    recognized = true;
+                } else {
+                    Long lastQueued = lastQueuedTime.get(trackingId);
+                    // Try to re-recognize much faster (every 200ms instead of 1000ms) if they are "Unknown", 
+                    // to quickly recover from motion blur. Max 2 items in queue to prevent CPU lock.
+                    if ((lastQueued == null || currentTime - lastQueued > 200) && faceProcessingQueue.size() < 2) {
+                        needsRecognition = true;
+                        lastQueuedTime.put(trackingId, currentTime);
                     }
                 }
+            } else {
+                needsRecognition = true; // Fallback if no tracking ID
             }
+
+            // 3. Crop face for recognition ONLY if needed (avoids allocating Bitmaps 60x a second)
+            if (needsRecognition) {
+                if (rawBitmap == null) {
+                    long startBitmapTime = System.currentTimeMillis();
+                    rawBitmap = imageProxy.toBitmap();
+                    Log.d(PERF_TAG, "Bitmap allocation took: " + (System.currentTimeMillis() - startBitmapTime) + "ms");
+                }
+                
+                long startCropTime = System.currentTimeMillis();
+                
+                android.graphics.Matrix rawToUpright = new android.graphics.Matrix();
+                rawToUpright.postRotate(rotationDegrees);
+                android.graphics.RectF rawRect = new android.graphics.RectF(0, 0, rawBitmap.getWidth(), rawBitmap.getHeight());
+                rawToUpright.mapRect(rawRect);
+                rawToUpright.postTranslate(-rawRect.left, -rawRect.top);
+                
+                android.graphics.Matrix uprightToRaw = new android.graphics.Matrix();
+                rawToUpright.invert(uprightToRaw);
+                
+                android.graphics.RectF faceRectUpright = new android.graphics.RectF(bounds);
+                android.graphics.RectF faceRectRaw = new android.graphics.RectF();
+                uprightToRaw.mapRect(faceRectRaw, faceRectUpright);
+                
+                int rawCropLeft = Math.max(0, (int) faceRectRaw.left);
+                int rawCropTop = Math.max(0, (int) faceRectRaw.top);
+                int rawCropRight = Math.min(rawBitmap.getWidth(), (int) faceRectRaw.right);
+                int rawCropBottom = Math.min(rawBitmap.getHeight(), (int) faceRectRaw.bottom);
+                int rWidth = rawCropRight - rawCropLeft;
+                int rHeight = rawCropBottom - rawCropTop;
+                
+                if (rWidth > 0 && rHeight > 0) {
+                    android.graphics.Matrix rotationMatrix = new android.graphics.Matrix();
+                    rotationMatrix.postRotate(rotationDegrees);
+                    Bitmap croppedAndRotated = Bitmap.createBitmap(rawBitmap, rawCropLeft, rawCropTop, rWidth, rHeight, rotationMatrix, true);
+                    
+                    faceProcessingQueue.add(new QueuedFace(croppedAndRotated, trackingId));
+                    Log.d(PERF_TAG, "Cropping and rotating tiny face took: " + (System.currentTimeMillis() - startCropTime) + "ms. Queue size now: " + faceProcessingQueue.size());
+                }
+            }
+
+            mappedBoxes.add(new BoundingBoxOverlay.Box(mappedRect, name, recognized, null));
         }
-        overlayView.setImageBitmap(reusableBitmap);
-        isProcessingFrame.set(false);
+
+        if (rawBitmap != null && !rawBitmap.isRecycled()) {
+            rawBitmap.recycle();
+        }
+
+        runOnUiThread(() -> overlayView.setBoxes(mappedBoxes));
     }
 
     private void startRecognitionLoop() {
         recognitionExecutor.execute(() -> {
-            while (!Thread.interrupted()) {
+            while (!Thread.interrupted() && !isActivityDestroyed) {
                 QueuedFace qFace = faceProcessingQueue.poll();
                 if (qFace != null) {
-                    runOnUiThread(() -> processingCard.setVisibility(View.VISIBLE));
+                    runOnUiThread(() -> {
+                        if (isActivityDestroyed || isFinishing()) return;
+                        processingCard.setVisibility(View.VISIBLE);
+                    });
                     
+                    long startRecognition = System.currentTimeMillis();
                     String name = recognizeFace(qFace.bitmap);
+                    long recogTime = System.currentTimeMillis() - startRecognition;
+                    Log.d(PERF_TAG, "FaceNet Recognition loop took: " + recogTime + "ms for result: " + name);
+                    
                     if (!name.equals("Unknown")) {
                         if (qFace.trackingId != null) {
                             recognizedTrackingIds.put(qFace.trackingId, name);
@@ -337,7 +478,13 @@ public class RecognitionActivity extends AppCompatActivity {
                         markAttendance(name);
                     }
                     
+                    // CRITICAL: Free up memory immediately after processing
+                    if (qFace.bitmap != null && !qFace.bitmap.isRecycled()) {
+                        qFace.bitmap.recycle();
+                    }
+                    
                     runOnUiThread(() -> {
+                        if (isActivityDestroyed || isFinishing()) return;
                         if (faceProcessingQueue.isEmpty()) {
                             processingCard.setVisibility(View.GONE);
                         }
@@ -358,6 +505,7 @@ public class RecognitionActivity extends AppCompatActivity {
         options.inJustDecodeBounds = true;
         
         ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
+        if (pfd == null) return null;
         BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor(), null, options);
         
         int reqWidth = 1080;
@@ -378,6 +526,10 @@ public class RecognitionActivity extends AppCompatActivity {
         Bitmap bitmap = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor(), null, options);
         pfd.close();
 
+        if (bitmap == null || bitmap.getWidth() <= 0 || bitmap.getHeight() <= 0) {
+            return null;
+        }
+
         try (java.io.InputStream input = getContentResolver().openInputStream(uri)) {
             if (input != null) {
                 androidx.exifinterface.media.ExifInterface exif = new androidx.exifinterface.media.ExifInterface(input);
@@ -395,7 +547,7 @@ public class RecognitionActivity extends AppCompatActivity {
                         matrix.postRotate(270);
                         break;
                 }
-                if (!matrix.isIdentity()) {
+                if (!matrix.isIdentity() && bitmap != null && bitmap.getWidth() > 0 && bitmap.getHeight() > 0) {
                     bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                 }
             }
@@ -440,19 +592,29 @@ public class RecognitionActivity extends AppCompatActivity {
         try {
             Bitmap resized = Bitmap.createScaledBitmap(cropped, 160, 160, true);
 
-            ByteBuffer buffer = ByteBuffer.allocateDirect(4 * 160 * 160 * 3);
-            buffer.order(ByteOrder.nativeOrder());
-            int[] pixels = new int[160 * 160];
-            resized.getPixels(pixels, 0, 160, 0, 0, 160, 160);
-            for (int val : pixels) {
-                // FaceNet standard normalization: (pixel - 127.5) / 127.5
-                buffer.putFloat((((val >> 16) & 0xFF) - 127.5f) / 127.5f);
-                buffer.putFloat((((val >> 8) & 0xFF) - 127.5f) / 127.5f);
-                buffer.putFloat(((val & 0xFF) - 127.5f) / 127.5f);
+            // Lazy initialize reusable buffers to prevent massive memory leaks
+            if (faceBuffer == null) {
+                faceBuffer = ByteBuffer.allocateDirect(4 * 160 * 160 * 3);
+                faceBuffer.order(ByteOrder.nativeOrder());
             }
+            if (facePixels == null) {
+                facePixels = new int[160 * 160];
+            }
+            
+            faceBuffer.rewind(); // Reset buffer position to 0 for reuse
+            resized.getPixels(facePixels, 0, 160, 0, 0, 160, 160);
+            
+            for (int val : facePixels) {
+                // FaceNet standard normalization: (pixel - 127.5) / 127.5
+                faceBuffer.putFloat((((val >> 16) & 0xFF) - 127.5f) / 127.5f);
+                faceBuffer.putFloat((((val >> 8) & 0xFF) - 127.5f) / 127.5f);
+                faceBuffer.putFloat(((val & 0xFF) - 127.5f) / 127.5f);
+            }
+            
+            resized.recycle(); // Free temporary scaled bitmap
 
             TensorBuffer input = TensorBuffer.createFixedSize(new int[]{1, 160, 160, 3}, DataType.FLOAT32);
-            input.loadBuffer(buffer);
+            input.loadBuffer(faceBuffer);
             Facenet.Outputs outputs = model.process(input);
             float[] emb = outputs.getOutputFeature0AsTensorBuffer().getFloatArray();
             
@@ -463,14 +625,15 @@ public class RecognitionActivity extends AppCompatActivity {
             if (norm > 0) for (int i = 0; i < emb.length; i++) emb[i] /= norm;
 
             return findMatch(emb);
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            Log.e("RecognitionActivity", "Error in recognizeFace", e);
             return "Unknown";
         }
     }
 
     private String findMatch(float[] embedding) {
         String name = "Unknown";
-        float minDistance = 0.75f; // Stricter threshold for siblings (was 1.0f)
+        float minDistance = 0.85f; // Relaxed threshold (was 0.75f)
         for (PersonEmbedding entry : faceEmbeddingsList) {
             float dist = 0;
             float[] stored = entry.embedding;
@@ -491,8 +654,11 @@ public class RecognitionActivity extends AppCompatActivity {
         currentAttendanceType = type;
     }
 
+    private static final Map<String, Long> globalLastMarkedTime = new ConcurrentHashMap<>();
+
     private void markAttendance(String name) {
         runOnUiThread(() -> {
+            if (isActivityDestroyed || isFinishing()) return;
             String type = currentAttendanceType;
             long currentTime = System.currentTimeMillis();
             
@@ -501,10 +667,12 @@ public class RecognitionActivity extends AppCompatActivity {
             int cooldownSecs = prefs.getInt(SettingsActivity.KEY_COOLDOWN, 3);
             long cooldownMs = cooldownSecs * 1000L;
             
-            if (lastMarkedTime.containsKey(name) && (currentTime - lastMarkedTime.get(name) < cooldownMs)) {
+            Long lastMarked = globalLastMarkedTime.get(name);
+            if (lastMarked != null && (currentTime - lastMarked < cooldownMs)) {
                 return;
             }
             
+            globalLastMarkedTime.put(name, currentTime);
             lastMarkedTime.put(name, currentTime);
             
             String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
@@ -535,13 +703,15 @@ public class RecognitionActivity extends AppCompatActivity {
                         try {
                             Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                             MediaPlayer mp = MediaPlayer.create(getApplicationContext(), notification);
-                            mp.start();
-                            mp.setOnCompletionListener(MediaPlayer::release);
+                            if (mp != null) {
+                                mp.start();
+                                mp.setOnCompletionListener(MediaPlayer::release);
+                            }
                         } catch (Exception e) {}
                     }
                     
-                    // Snackbar Notification
-                    UIHelper.showSuccessSnackbar(findViewById(android.R.id.content), "Marked " + type + " for " + name);
+                    // Silent UI feedback in the status text box
+                    statusText.setText("✅ Marked " + type + ": " + name);
                 });
             });
         });
@@ -549,17 +719,22 @@ public class RecognitionActivity extends AppCompatActivity {
 
     private void loadEmbeddings() {
         AppDatabase.databaseWriteExecutor.execute(() -> {
+            if (isActivityDestroyed) return;
             List<MemberEntity> members = AppDatabase.getDatabase(this).memberDao().getAllMembers();
             java.util.List<PersonEmbedding> list = new java.util.ArrayList<>();
             for (MemberEntity m : members) {
                 list.add(new PersonEmbedding(m.name, m.embedding));
             }
-            faceEmbeddingsList = list;
+            faceEmbeddingsList.clear();
+            faceEmbeddingsList.addAll(list);
             
             // Count unique members for the UI
             java.util.HashSet<String> uniqueNames = new java.util.HashSet<>();
             for (PersonEmbedding p : list) uniqueNames.add(p.name);
-            runOnUiThread(() -> statusText.setText("Registered members: " + uniqueNames.size() + " (" + list.size() + " faces)"));
+            runOnUiThread(() -> {
+                if (isActivityDestroyed || isFinishing()) return;
+                statusText.setText("Registered members: " + uniqueNames.size() + " (" + list.size() + " faces)");
+            });
         });
     }
 
@@ -580,9 +755,11 @@ public class RecognitionActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        isActivityDestroyed = true;
         super.onDestroy();
-        cameraExecutor.shutdown();
-        recognitionExecutor.shutdownNow();
+        if (cameraExecutor != null) cameraExecutor.shutdown();
+        if (recognitionExecutor != null) recognitionExecutor.shutdownNow();
         if (model != null) model.close();
+        if (detector != null) detector.close();
     }
 }

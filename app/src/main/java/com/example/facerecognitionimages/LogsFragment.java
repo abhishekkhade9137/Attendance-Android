@@ -154,16 +154,18 @@ public class LogsFragment extends Fragment {
                 if ("OUT".equals(log.type)) {
                     List<LogEntity> userLogs = AppDatabase.getDatabase(context).logDao()
                         .getLogsForUserOnDate(log.name, log.date);
-                    LogEntity firstIn = null;
+                    LogEntity latestInBefore = null;
                     for (LogEntity uLog : userLogs) {
+                        // Find the most recent "IN" that is earlier than this "OUT"
                         if ("IN".equals(uLog.type) && uLog.time.compareTo(log.time) < 0) {
-                            firstIn = uLog;
-                            break;
+                            if (latestInBefore == null || uLog.time.compareTo(latestInBefore.time) > 0) {
+                                latestInBefore = uLog;
+                            }
                         }
                     }
-                    if (firstIn != null) {
+                    if (latestInBefore != null) {
                         try {
-                            Date inTime = timeFormat.parse(firstIn.time);
+                            Date inTime = timeFormat.parse(latestInBefore.time);
                             Date outTime = timeFormat.parse(log.time);
                             long diffMs = outTime.getTime() - inTime.getTime();
                             long hours = diffMs / (1000 * 60 * 60);

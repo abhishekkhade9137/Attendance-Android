@@ -79,10 +79,11 @@ public class RegisterActivity extends AppCompatActivity {
 
     private FaceDetector detector;
     private Facenet model;
-    public static java.util.List<RecognitionActivity.PersonEmbedding> faceEmbeddingsList = new java.util.ArrayList<>();
+    public static volatile java.util.List<RecognitionActivity.PersonEmbedding> faceEmbeddingsList = new java.util.concurrent.CopyOnWriteArrayList<>();
     private volatile boolean isProcessing = false;
     private volatile boolean isDialogActive = false;
     private volatile boolean isReadyToScan = false;
+    private volatile boolean isActivityDestroyed = false;
     private android.widget.Button btnReady;
     
     private Bitmap reusableBitmap = null;
@@ -183,13 +184,13 @@ public class RegisterActivity extends AppCompatActivity {
                         .build();
 
                 imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
-                    if (isProcessing || isDialogActive || !isReadyToScan) {
+                    if (isProcessing || isDialogActive || !isReadyToScan || isActivityDestroyed || isFinishing()) {
                         imageProxy.close();
                         return;
                     }
                     isProcessing = true;
                     runOnUiThread(() -> {
-                        if (isFinishing() || isDestroyed()) return;
+                        if (isFinishing() || isDestroyed() || isActivityDestroyed) return;
                         Bitmap bitmap = previewView.getBitmap();
                         if (bitmap != null) {
                             detectAndRegister(bitmap);
@@ -276,7 +277,7 @@ public class RegisterActivity extends AppCompatActivity {
                         recognitionExecutor.execute(() -> {
                             float[] embedding = getEmbedding(bitmap, bounds);
                             runOnUiThread(() -> {
-                                if (isFinishing() || isDestroyed()) return;
+                                if (isFinishing() || isDestroyed() || isActivityDestroyed) return;
                                 processingCard.setVisibility(View.GONE);
                                 if (embedding != null) {
                                     showRegistrationDialog(bitmap, bounds, embedding);
@@ -492,7 +493,7 @@ public class RegisterActivity extends AppCompatActivity {
                                     recognitionExecutor.execute(() -> {
                                         float[] embedding = getEmbedding(bitmap, bounds);
                                         runOnUiThread(() -> {
-                                            if (isFinishing() || isDestroyed()) return;
+                                            if (isFinishing() || isDestroyed() || isActivityDestroyed) return;
                                             processingCard.setVisibility(View.GONE);
                                             if (embedding != null) {
                                                 isDialogActive = true;
@@ -520,6 +521,7 @@ public class RegisterActivity extends AppCompatActivity {
         options.inJustDecodeBounds = true;
         
         ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r");
+        if (pfd == null) return null;
         BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor(), null, options);
         
         int reqWidth = 1080;
@@ -540,6 +542,10 @@ public class RegisterActivity extends AppCompatActivity {
         Bitmap bitmap = BitmapFactory.decodeFileDescriptor(pfd.getFileDescriptor(), null, options);
         pfd.close();
 
+        if (bitmap == null || bitmap.getWidth() <= 0 || bitmap.getHeight() <= 0) {
+            return null;
+        }
+
         try (java.io.InputStream input = getContentResolver().openInputStream(uri)) {
             if (input != null) {
                 androidx.exifinterface.media.ExifInterface exif = new androidx.exifinterface.media.ExifInterface(input);
@@ -557,7 +563,7 @@ public class RegisterActivity extends AppCompatActivity {
                         matrix.postRotate(270);
                         break;
                 }
-                if (!matrix.isIdentity()) {
+                if (!matrix.isIdentity() && bitmap != null && bitmap.getWidth() > 0 && bitmap.getHeight() > 0) {
                     bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                 }
             }
@@ -582,12 +588,14 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void loadEmbeddings() {
         AppDatabase.databaseWriteExecutor.execute(() -> {
+            if (isActivityDestroyed) return;
             List<MemberEntity> members = AppDatabase.getDatabase(this).memberDao().getAllMembers();
             java.util.List<RecognitionActivity.PersonEmbedding> list = new java.util.ArrayList<>();
             for (MemberEntity m : members) {
                 list.add(new RecognitionActivity.PersonEmbedding(m.name, m.embedding));
             }
-            faceEmbeddingsList = list;
+            faceEmbeddingsList.clear();
+            faceEmbeddingsList.addAll(list);
         });
     }
 
@@ -608,10 +616,12 @@ public class RegisterActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        isActivityDestroyed = true;
         super.onDestroy();
-        cameraExecutor.shutdown();
-        recognitionExecutor.shutdownNow();
+        if (cameraExecutor != null) cameraExecutor.shutdown();
+        if (recognitionExecutor != null) recognitionExecutor.shutdownNow();
         if (model != null) model.close();
+        if (detector != null) detector.close();
     }
 
     private String findMatch(float[] embedding) {

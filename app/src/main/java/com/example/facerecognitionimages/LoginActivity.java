@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.TextView;
+import com.example.facerecognitionimages.utils.ClickUtils;
 import com.example.facerecognitionimages.utils.UIHelper;
 import android.widget.Toast;
 
@@ -39,7 +40,10 @@ public class LoginActivity extends AppCompatActivity {
 
         checkInitialState();
 
-        btnLogin.setOnClickListener(v -> handleLogin());
+        btnLogin.setOnClickListener(v -> {
+            if (ClickUtils.isFastDoubleClick(v)) return;
+            handleLogin();
+        });
     }
 
     private void checkInitialState() {
@@ -54,9 +58,18 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void handleLogin() {
+        if (pinInput.getText() == null) {
+            pinInput.setError("PIN cannot be empty");
+            return;
+        }
         String enteredPin = pinInput.getText().toString().trim();
         if (TextUtils.isEmpty(enteredPin)) {
             pinInput.setError("PIN cannot be empty");
+            return;
+        }
+
+        if (!enteredPin.matches("^[0-9]+$")) {
+            pinInput.setError("PIN must contain only digits");
             return;
         }
 

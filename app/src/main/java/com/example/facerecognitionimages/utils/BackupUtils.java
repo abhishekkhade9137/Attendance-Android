@@ -2,6 +2,8 @@ package com.example.facerecognitionimages.utils;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.example.facerecognitionimages.db.AppDatabase;
@@ -9,9 +11,11 @@ import com.example.facerecognitionimages.db.MemberEntity;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +34,7 @@ public class BackupUtils {
     }
 
     public static void exportBackup(Context context, Uri destUri, BackupCallback callback) {
+        Handler mainHandler = new Handler(Looper.getMainLooper());
         AppDatabase.databaseWriteExecutor.execute(() -> {
             try {
                 // 1. Get data
@@ -65,32 +70,50 @@ public class BackupUtils {
                     }
                 }
                 
-                if (callback != null) callback.onSuccess();
+                if (callback != null) {
+                    mainHandler.post(callback::onSuccess);
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Export failed", e);
-                if (callback != null) callback.onError(e.getMessage());
+                if (callback != null) {
+                    final String msg = e.getMessage();
+                    mainHandler.post(() -> callback.onError(msg));
+                }
             }
         });
     }
 
     public static void importBackup(Context context, Uri sourceUri, BackupCallback callback) {
+        Handler mainHandler = new Handler(Looper.getMainLooper());
         AppDatabase.databaseWriteExecutor.execute(() -> {
             try {
+                File destinationDir = context.getFilesDir();
+                String canonicalDest = destinationDir.getCanonicalPath();
+                if (!canonicalDest.endsWith(File.separator)) {
+                    canonicalDest += File.separator;
+                }
                 try (InputStream is = context.getContentResolver().openInputStream(sourceUri);
                      ZipInputStream zis = new ZipInputStream(is)) {
                      
                     ZipEntry entry;
                     while ((entry = zis.getNextEntry()) != null) {
+                        File outFile = new File(destinationDir, entry.getName());
+                        String canonicalOut = outFile.getCanonicalPath();
+                        if (!canonicalOut.startsWith(canonicalDest) && !canonicalOut.equals(destinationDir.getCanonicalPath())) {
+                            throw new IOException("Zip entry is outside target directory: " + entry.getName());
+                        }
+
                         if (entry.getName().equals(JSON_FILENAME)) {
-                            // Read JSON
-                            StringBuilder sb = new StringBuilder();
+                            // Read JSON using ByteArrayOutputStream to safely handle multi-byte UTF-8 boundaries
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
                             byte[] buffer = new byte[1024];
                             int len;
                             while ((len = zis.read(buffer)) > 0) {
-                                sb.append(new String(buffer, 0, len, StandardCharsets.UTF_8));
+                                baos.write(buffer, 0, len);
                             }
+                            String jsonStr = baos.toString(StandardCharsets.UTF_8.name());
                             
-                            List<MemberEntity> members = new Gson().fromJson(sb.toString(),
+                            List<MemberEntity> members = new Gson().fromJson(jsonStr,
                                     new TypeToken<List<MemberEntity>>(){}.getType());
                                     
                             if (members != null) {
@@ -101,7 +124,6 @@ public class BackupUtils {
                             }
                         } else if (entry.getName().endsWith("_face.png")) {
                             // Extract Image
-                            File outFile = new File(context.getFilesDir(), entry.getName());
                             try (FileOutputStream fos = new FileOutputStream(outFile)) {
                                 byte[] buffer = new byte[1024];
                                 int len;
@@ -113,10 +135,15 @@ public class BackupUtils {
                         zis.closeEntry();
                     }
                 }
-                if (callback != null) callback.onSuccess();
+                if (callback != null) {
+                    mainHandler.post(callback::onSuccess);
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Import failed", e);
-                if (callback != null) callback.onError(e.getMessage());
+                if (callback != null) {
+                    final String msg = e.getMessage();
+                    mainHandler.post(() -> callback.onError(msg));
+                }
             }
         });
     }
