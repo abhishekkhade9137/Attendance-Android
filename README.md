@@ -1,4 +1,4 @@
-# Face Attendance System 🚀
+# Face Attendance System
 
 A robust, offline-first Android application designed for seamless and automated attendance tracking using advanced Facial Recognition technology. 
 
@@ -6,7 +6,7 @@ This app leverages Google's ML Kit for lightning-fast face detection and a local
 
 ---
 
-## 🏗️ Detailed Architecture & System Design
+## Detailed Architecture & System Design
 
 To achieve real-time, 30 FPS facial tracking simultaneously with heavy mathematical neural network inference, the app is engineered using a highly optimized, decoupled two-lane architecture. 
 
@@ -85,7 +85,7 @@ sequenceDiagram
 
 ---
 
-## 🌟 Core Features
+## Core Features
 
 - **Real-time Live Recognition:** Scan and identify individuals instantly with 0 UI latency.
 - **Group Photo Recognition:** Upload a group photo; the app will scan the image, locate multiple registered individuals simultaneously, and log attendance in bulk.
@@ -95,7 +95,7 @@ sequenceDiagram
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 | Component | Description |
 |-----------|-------------|
@@ -109,7 +109,7 @@ sequenceDiagram
 
 ---
 
-## 🛠️ Setup & Installation
+## Setup & Installation
 
 ### Prerequisites
 * **Android Studio** (Flamingo or newer)
@@ -126,7 +126,7 @@ sequenceDiagram
 
 ---
 
-## 🔐 Permissions Required
+## Permissions Required
 
 * **`CAMERA`**: For live face scanning and taking photos during registration.
 * **`READ/WRITE_EXTERNAL_STORAGE`**: To select group photos and export CSV attendance logs.
