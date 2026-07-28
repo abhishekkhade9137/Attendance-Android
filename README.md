@@ -12,6 +12,34 @@ To achieve real-time, 30 FPS facial tracking simultaneously with heavy mathemati
 
 ### 1. The Two-Lane Asynchronous Pipeline
 Instead of blocking the camera feed while waiting for the AI to recognize a face, the system splits the workload into two distinct lanes:
+
+```mermaid
+graph TD
+    %% Main Camera Input
+    Cam((CameraX Feed)) -->|30-60 FPS| Analyzer[MLKit ImageAnalyzer]
+    
+    subgraph UI Tracking Lane [Lane 1: UI & Tracking - Main Thread]
+        Analyzer -->|Detect Faces| Tracker[MLKit Face Tracker]
+        Tracker -->|Assigns Tracking ID| Overlay[UI Bounding Box]
+        Overlay -->|Renders Instantly| Screen((Display))
+    end
+    
+    subgraph Neural Inference Lane [Lane 2: AI Inference - Background Pool]
+        Tracker -->|New/Unknown Face ID| Crop[Crop & Rotate 160x160 Bitmap]
+        Crop -->|Add to Queue| Queue[(ConcurrentLinkedQueue)]
+        Queue -->|Consume via Thread| TFLite[TensorFlow Lite FaceNet]
+        TFLite -->|Calculate 192-Float Vector| Matching[Cosine Similarity Match]
+        Matching -->|Query SQLite| Database[(Room Database)]
+        Database -->|Return Name| Name[Update Bounding Box Label]
+        Name -.-> Overlay
+    end
+
+    classDef lane1 fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px;
+    classDef lane2 fill:#fce4ec,stroke:#e91e63,stroke-width:2px;
+    class UI Tracking Lane lane1
+    class Neural Inference Lane lane2
+```
+
 * **The Tracking Lane (UI Thread / CameraX Analyzer):** 
   Runs at a solid **30-60 FPS**. Google's MLKit scans the camera feed, locates faces, and assigns them a temporary integer `Tracking ID`. It draws bounding boxes on the screen instantly, providing a buttery-smooth user experience without lag.
 * **The Inference Lane (Background Thread Pool):** 
@@ -26,6 +54,24 @@ Instead of blocking the camera feed while waiting for the AI to recognize a face
 
 ### 3. Memory & Resource Management (Anti-LMK)
 Heavy camera processing can rapidly exhaust an Android device's Java Heap, triggering the OS's Low Memory Killer (LMK). To guarantee infinite uptime without memory leaks:
+
+```mermaid
+sequenceDiagram
+    participant OS as Android OS (Camera)
+    participant Analyzer as MLKit Analyzer
+    participant GC as Java Garbage Collector
+    participant TFLite as Native TFLite Engine
+    
+    OS->>Analyzer: Emit 1280x720 ImageProxy
+    note over Analyzer: Allocate 3.6MB rawBitmap
+    Analyzer->>Analyzer: Locate Face & Math Matrix
+    Analyzer->>TFLite: Create 160x160 crop (160KB)
+    Analyzer->>Analyzer: .recycle() rawBitmap INSTANTLY
+    Analyzer-->>GC: Memory footprint instantly freed (No LMK trigger)
+    note over TFLite: Reuse Single Persistent ByteBuffer
+    TFLite->>TFLite: Process 160x160 crop natively
+```
+
 * **Manual Bitmap Lifecycle:** The 3.6 Megabyte raw camera frames from CameraX (`ImageProxy.toBitmap()`) are explicitly captured and `.recycle()`'d the exact microsecond the 160x160 face crop is extracted. This keeps the memory footprint perfectly flat and prevents the Garbage Collector from throttling the CPU.
 * **Native Buffer Pooling:** The raw `ByteBuffer` and `int[]` structures required by TFLite are instantiated exactly once during app startup and reused infinitely for every frame, eliminating memory fragmentation and native memory exhaustion.
 
