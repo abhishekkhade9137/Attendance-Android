@@ -18,13 +18,13 @@ graph TD
     %% Main Camera Input
     Cam((CameraX Feed)) -->|30-60 FPS| Analyzer[MLKit ImageAnalyzer]
     
-    subgraph UI Tracking Lane [Lane 1: UI & Tracking - Main Thread]
+    subgraph UITrackingLane [Lane 1: UI & Tracking - Main Thread]
         Analyzer -->|Detect Faces| Tracker[MLKit Face Tracker]
         Tracker -->|Assigns Tracking ID| Overlay[UI Bounding Box]
         Overlay -->|Renders Instantly| Screen((Display))
     end
     
-    subgraph Neural Inference Lane [Lane 2: AI Inference - Background Pool]
+    subgraph NeuralInferenceLane [Lane 2: AI Inference - Background Pool]
         Tracker -->|New/Unknown Face ID| Crop[Crop & Rotate 160x160 Bitmap]
         Crop -->|Add to Queue| Queue[(ConcurrentLinkedQueue)]
         Queue -->|Consume via Thread| TFLite[TensorFlow Lite FaceNet]
@@ -36,8 +36,8 @@ graph TD
 
     classDef lane1 fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px;
     classDef lane2 fill:#fce4ec,stroke:#e91e63,stroke-width:2px;
-    class UI Tracking Lane lane1
-    class Neural Inference Lane lane2
+    class UITrackingLane lane1
+    class NeuralInferenceLane lane2
 ```
 
 * **The Tracking Lane (UI Thread / CameraX Analyzer):** 
